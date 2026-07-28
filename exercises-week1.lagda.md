@@ -77,7 +77,7 @@ add-ℕ : ℕ → ℕ → ℕ
 add-ℕ n m = {!   !}
 ```
 
-**Hint:** pattern match the first parameter `n`, you'll then get two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor.
+**Hint:** pattern match the first parameter `n` and you'll then two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor.
 
 #### Exercise 1.2: Define a function to multiply two natural numbers
 
@@ -87,3 +87,13 @@ mul-ℕ n m = {!   !}
 ```
 
 **Hint:** here again pattern match on the first variable `n`, but now you will need to use your `add-ℕ` function in the case where a recursive call back to `mul-ℕ` is called for. More specifically, our cases implement the defining equations `0 * m = 0` and `(n + 1) * m = n * m + m`.
+
+#### Exercise 1.3: Define the **predecessor** function
+
+The predecessor maps `0 ↦ 0` and maps `(n + 1) ↦ n`:
+
+```agda 
+pred-ℕ : ℕ → ℕ
+pred-ℕ n = {!   !}
+```
+
