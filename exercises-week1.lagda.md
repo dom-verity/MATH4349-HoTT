@@ -66,7 +66,7 @@ In essence, this declaration:
 
 Later on we will see how we can build a function which encapsulates the the usual natural number **induction principle** using the **pattern matching** facilities of Agda. We won't do that here, since we haven't yet discussed the general form of data types and the rules that define them, but we will have lots to say about induction in type theory as we go along.
 
-**Note:** To inser the natural number symbol ℕ type the character sequence "\-b-N". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\" we enter _unicode input mode_, which allos us to translate following character sequences into unicode symbols.
+**Note:** To insert the natural number symbol ℕ type the character sequence "\\-b-N". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\\" we enter _unicode input mode_, which allows us to translate the subsequent character sequence into a unicode symbol.
 
 We'll just amuse ourselves with some basic exercises:
 
