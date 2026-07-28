@@ -48,5 +48,42 @@ UU : (i : Level) → Set (lsuc i)
 UU i = Set i
 ```
 
+### Natural numbers
 
+We define the natural numbers to be an **inductive type** at level `lzero`, the lowest universe level.
 
+```agda 
+data ℕ : UU lzero where
+    zero-ℕ : ℕ
+    succ-ℕ : ℕ → ℕ
+```     
+
+In essence, this declaration:
+
+* declares a new type `ℕ` in universe `UU lzero` in in its first line,
+* which has a **zero** element `zero-ℕ` specified, given in its second line, and
+* specifies that every element `n : ℕ` should have a **successor** `succ-ℕ n : ℕ` in its third line.
+
+Later on we will see how we can build a function which encapsulates the the usual natural number **induction principle** using the **pattern matching** facilities of Agda. We won't do that here, since we haven't yet discussed the general form of data types and the rules that define them, but we will have lots to say about induction in type theory as we go along.
+
+**Note:** To inser the natural number symbol ℕ type the character sequence "\-b-N". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\" we enter _unicode input mode_, which allos us to translate following character sequences into unicode symbols.
+
+We'll just amuse ourselves with some basic exercises:
+
+#### Exercise 1.1: Define a function to add two natual numbers:
+
+```agda 
+add-ℕ : ℕ → ℕ → ℕ
+add-ℕ n m = {!   !}
+```
+
+**Hint:** pattern match the first parameter `n`, you'll then get two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor.
+
+#### Exercise 1.2: Define a function to multiply two natural numbers
+
+```agda
+mul-ℕ : ℕ → ℕ → ℕ
+mul-ℕ n m = {!   !}
+```
+
+**Hint:** here again pattern match on the first variable `n`, but now you will need to use your `add-ℕ` function in the case where a recursive call back to `mul-ℕ` is called for. More specifically, our cases implement the defining equations `0 * m = 0` and `(n + 1) * m = n * m + m`.
