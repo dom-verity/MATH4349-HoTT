@@ -77,7 +77,7 @@ add-ℕ : ℕ → ℕ → ℕ
 add-ℕ n m = {!   !}
 ```
 
-**Hint:** pattern match the first parameter `n` and you'll then two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor.
+**Hint:** pattern match the first parameter `n` and you'll then two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor ((n + 1) + m = (n + m) + 1).
 
 #### Exercise 1.2: Define a function to multiply two natural numbers
 
@@ -86,7 +86,7 @@ mul-ℕ : ℕ → ℕ → ℕ
 mul-ℕ n m = {!   !}
 ```
 
-**Hint:** here again pattern match on the first variable `n`, but now you will need to use your `add-ℕ` function in the case where a recursive call back to `mul-ℕ` is called for. More specifically, our cases implement the defining equations `0 * m = 0` and `(n + 1) * m = n * m + m`.
+**Hint:** here again pattern match on the first variable `n`, but now you will need to use your `add-ℕ` function in the case where a recursive call to `mul-ℕ` is called for. More specifically, our cases implement the defining equations `0 * m = 0` and `(n + 1) * m = n * m + m`.
 
 #### Exercise 1.3: Define the **predecessor** function
 
@@ -97,3 +97,27 @@ pred-ℕ : ℕ → ℕ
 pred-ℕ n = {!   !}
 ```
 
+#### Exercise 1.4: Define a **parity** function
+
+First we define a new data type `Parity` which has two values `Even` and `Odd`.
+
+```agda 
+data Parity : UU lzero where
+    Even : Parity
+    Odd : Parity
+```
+
+Notice that now that we can define functions which take inputs of type `Parity` by pattern matching against the patterns `Even` and `Odd`. For example, here is a function to map the parity `Even` to the natural number `0` and `Odd` to the natural number `1`.
+
+```agda 
+parity-to-ℕ : Parity → ℕ
+parity-to-ℕ Even = zero-ℕ
+parity-to-ℕ Odd = succ-ℕ zero-ℕ
+```
+
+Now define a function which maps the even numbers in `ℕ` to the parity `Even` and the odd numbers to `Odd`.
+
+```agda 
+parity : ℕ → Parity
+parity n = {!   !}
+```
