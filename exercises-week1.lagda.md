@@ -143,6 +143,8 @@ data _∧_ (A B : UU lzero) : UU lzero where
     pair : A → B → A ∧ B
 ```
 
+#### Introduction and elimination rules
+
 We can think of the **constructor** `pair` as an **introduction rule**, it tells us how to introduce a proof of `A ∧ B` by "combining" given proofs of `A` and `B`. We should also have some **elimination rules** which allow us to deconstruct a proof of `A ∧ B` to give the "parts" it is made up of. We have two of these for conjunction and we can define them using pattern matching.
 
 ```adga 
@@ -153,12 +155,33 @@ We can think of the **constructor** `pair` as an **introduction rule**, it tells
 ∧-elim-right p = ?
 ```
 
-**Note:** `∧-elim-left` and `∧-elim-right` are the traditional names for these conjunction elimination rules. Correspondingly, the traditional name for the introduction rule `pair` is `∧-intro`, so for future use we define the following **alias**.
+`∧-elim-left` and `∧-elim-right` are the traditional names for these conjunction elimination rules. Correspondingly, the traditional name for the introduction rule `pair` is `∧-intro`, so for future use we define the following **alias**.
 
 ```agda 
 ∧-intro : { A B : UU lzero } → A → B → A ∧ B
 ∧-intro = pair
 ```
+
+This function actually has 4 inputs, two of these are the propositions `A` and `B` of type `UU lzero` and the other two are terms of types `A` and `B` respectively. However, when we use `∧-intro` (or equally `pair`) we usually only need to supply two parameters as in `∧-intro p q`, where `p` is a term (proof) of type `A` and `q` is a term of type `B`. So why don't we also need to supply the first two parameters specifying the types of `p` and `q`.
+
+The trick here is that Agda already knows the types of the two terms (proofs) supplied as parameters to an instance of `∧-intro`. Specifically, these may be computed from the ambient **environment** (list of declared variables and functions) at the point where that instance is used. Consequently Agda it doesn't need you to supply those types because it can **infer** them from the surrounding **context**.
+
+In the **type** signature above, the declaration `{ A B : UU lzero}` of those first two parameters is surrounded by _curly braces_. This tells Agda that it should try to infer the types to be passed as those parameters from the context, rather than asking the mathematician writing expression involving `∧-intro` to provide them explicitly.
+
+#### Associativity proof
+
+Of course, conjunction should be an **associative** operator which fact we prove with the following pair of functions. 
+
+```agda 
+∧-assoc-right : { A B C : UU lzero } → A ∧ (B ∧ C) → (A ∧ B) ∧ C
+∧-assoc-right p = {!   !}
+
+∧-assoc-left : { A B C : UU lzero } → (A ∧ B) ∧ C → A ∧ (B ∧ C)
+∧-assoc-left p = {!   !}
+```
+
+**Note:** To define the **bodies** of these functions (proofs!) you can either use the native pattern matching facilities of Agda, as above, or you can build them as expressions made out of `∧-intro`, `∧-elim-right` and `∧-elim-left`. Have a go at the latter approach, it gives an answer that is much closer to the kind of proof you would see in a logic textbook.
+
 
 
 
