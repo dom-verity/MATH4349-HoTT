@@ -18,7 +18,7 @@ In the following code we've set the following options:
 Every module file must start with a `module` stanza.
 
 ```agda
-module exercises-week1 where
+module exercises1 where
 ```
 
 **Note:** the `module-name` must match the base of the file name `module-name.lagda.md`. The extension `.lagda.md` tells Agda that this is a **literate file** written in the markup language [Markdown](https://markdown.org). The contents of the file itself is intended to be a human readable document, with Agda code interspersed throughout and enclosed **fenced code blocks**. These start with \`\`\` or \`\`\`agda on its own line, and end with \`\`\`, also on its own line
