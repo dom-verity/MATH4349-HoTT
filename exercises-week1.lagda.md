@@ -136,6 +136,8 @@ We would like our conjunction operation to be given in standard **infix** notati
 infixr 2 _∧_
 ```
 
+There is a variant of this directive called `infixl` which we use to tell Agda to regard a operator as associated to the **left**. The integer supplied to `infixr` or `infixl` before the operator symbol being declared is called the **precedence** of the operator. The higher the precedence of an operator the more tightly it binds to its arguments.
+
 The **terms** of type `A ∧ B` should correspond to **proofs** of that proposition. Of course, to prove `A ∧ B` we must provide two proofs, one of `A` and one of `B`, so the terms of conjunction as a data type should be pairs. Accordingly we get the following data type declaration:
 
 ```agda 
@@ -170,7 +172,7 @@ In the **type** signature above, the declaration `{ A B : UU lzero}` of those fi
 
 #### Associativity proof
 
-Of course, conjunction should be an **associative** operator which fact we prove with the following pair of functions. 
+Of course, conjunction should be an **associative** operator, which fact we prove with the following pair of functions. 
 
 ```agda 
 ∧-assoc-right : { A B C : UU lzero } → A ∧ (B ∧ C) → (A ∧ B) ∧ C
@@ -182,6 +184,57 @@ Of course, conjunction should be an **associative** operator which fact we prove
 
 **Note:** To define the **bodies** of these functions (proofs!) you can either use the native pattern matching facilities of Agda, as above, or you can build them as expressions made out of `∧-intro`, `∧-elim-right` and `∧-elim-left`. Have a go at the latter approach, it gives an answer that is much closer to the kind of proof you would see in a logic textbook.
 
+### Symmetry proof
+
+Oh I nearly forgot, conjunction is also a **symmetric** operator.
+
+```agda 
+∧-symm : {A B : UU lzero } → A ∧ B → B ∧ A 
+∧-symm p = {!   !}
+```
+
+Here again, we can either prove this using pattern matching or we can construct a proof expression using `∧-intro`, `∧-elim-right` and `∧-elim-left`.
+
+### Disjunction (or)
+
+Here again we start by making `∨` a right associated infix operator.
+
+```agda 
+infixr 1 _∨_
+```
+
+Notice here that we gave `∧` the precedence 2 and `∨` the precedence 1 so **and** binds more tightly to its arguments than **or** does. So, for example, Agda now brackets the expression `A ∧ B ∨ C` as `(A ∧ B) ∨ C`.
+
+```agda 
+data _∨_ (A B : UU lzero) : UU lzero where
+    inl : A → A ∨ B
+    inr : B → A ∨ B
+```
+
+#### Introduction and elimination rules
+
+Here again the introduction rules for disjunction are simply the constructors `inl` (in left) and `inr` (in right) given in the body of the `data` declaraion for `∨`. When viewed as introduction rules these traditionally revel in the names `∨-intro-left` and `∨-intro-right`, so we introduce those names as aliases for the constructors of `∨` here.
+
+```agda 
+∨-intro-left : { A B : UU lzero } → A → A ∨ B
+∨-intro-left = inl
+
+∨-intro-right : { A B : UU lzero } → B → A ∨ B
+∨-intro-right = inr
+```
+
+Disjunction has a single elimination rule which is a little more involved.
+
+```agda
+∨-elim : { A B P : UU lzero } → (A → P) → (B → P) → A ∨ B → P
+∨-elim p q r = {!   !}
+```
+
+We can interpret this as a logical rule in the following way:
+
+* Given a proof `p : A → P` that from a proof of `A` I can prove `P`, and
+* a proof `q : B → P` that from a proof of `B` I can also prove `P`, then 
+* from a proof `r : A ∨ B` that `A` or `B` holds I get a proof `∨-elim p q r` that `P` holds.
 
 
 
