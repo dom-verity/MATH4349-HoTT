@@ -360,7 +360,7 @@ S : { A B C : UU lzero } → (A ⇒ B ⇒ C) ⇒ (A ⇒ B) ⇒ (A ⇒ C)
 S = {!   !} 
 ```
 
-These are called `K` and `S` because they also appear as key players in Moses Schönfinkel's [_Combinatory logic_](https://en.wikipedia.org/wiki/Combinatory_logic), where they are called _(K)onstant_ and _(S)chmelzen_ (which means to _fuse_ or _melt_ in German). Maybe it is more memorable to use the name _substitute_ as the name of the `S` combinator.
+These are called `K` and `S` because they also appear as key players in Moses Schönfinkel's [_Combinatory logic_](https://en.wikipedia.org/wiki/Combinatory_logic), where they are called _(K)onstant_ and _(S)chmelzen_ (which means to _fuse_ or _melt_ in German). Maybe it is more memorable to use the name _substitute_ as the name of the `S` combinator. Schönfinkel's name for `⇒-identity` was simply `I` for _(I)dentity_ I guess.
 
 Now prove the rule I alluded to above when speaking of the binding power of `⇒`.
 
