@@ -175,15 +175,15 @@ data _∧_ ( A B : UU lzero ) : UU lzero where
 
 We can think of the **constructor** `pair` as an **introduction rule**, it tells us how to introduce a proof of `A ∧ B` by "combining" given proofs of `A` and `B`. We should also have some **elimination rules** which allow us to deconstruct a proof of `A ∧ B` to give the "parts" it is made up of. We have two of these for conjunction and we can define them using pattern matching.
 
-```adga 
-∧-elim-left : A ∧ B → A
-∧-elim-left p = ?
+```agda 
+∧-elim-left : { A B : UU lzero } → A ∧ B → A
+∧-elim-left p = {!   !}
 
-∧-elim-right : A ∧ B → B
-∧-elim-right p = ?
+∧-elim-right : { A B : UU lzero } → A ∧ B → B
+∧-elim-right p = {!   !}
 ```
 
-`∧-elim-left` and `∧-elim-right` are the traditional names for these conjunction elimination rules. Correspondingly, the traditional name for the introduction rule `pair` is `∧-intro`, so for future use we define the following **alias**.
+The names `∧-elim-left` and `∧-elim-right` are traditional for these conjunction elimination rules. Correspondingly, the traditional name for the introduction rule `pair` is `∧-intro`, so for future use we define the following **alias**.
 
 ```agda 
 ∧-intro : { A B : UU lzero } → A → B → A ∧ B
@@ -334,9 +334,37 @@ This defines our introduction rule, which can be interpreted as saying:
 
 > Suppose we are given a procedure `f : A → B` which takes a proof of `A` and constructs a proof of `B` then we can build a proof `⇒-intro f` of `A ⇒ B`.
 
-The elimination rule for implication is traditionally called **modus ponens**, but we will follow our naming convention and call it the less interesting sounding `⇒-elim`.
+The elimination rule for implication is traditionally called **modus ponens**, but we will follow our naming convention and refer to it by the less interesting sounding moniker `⇒-elim`.
 
 ```agda
 ⇒-elim : { A B : UU lzero } → (A ⇒ B) → A → B
 ⇒-elim p a = {!   !}
+```
+
+As a simple example, we would expect there to be a proof that `A ⇒ A` holds for any proposition `A`, and this is indeed the case as demonstrated by the following rule definition.
+
+```agda 
+⇒-identity : { A : UU lzero } → A ⇒ A 
+⇒-identity = ⇒-intro (λ x → x)
+``` 
+
+This, however, introduces a new expression type `λ x → t` which we haven't seen before, which are called **lambda expressions** or _anonymous functions_. The expression `λ x → t` stands for a function which takes a _parameter_ `x` and returns the value computed by the term `t`, which itself may contain instances of the variable `x`. So the function `λ x → x` takes an argument and simply returns that value unchanged - in other words, this is the **identity function** given as a lambda expression.
+
+If you've done a traditional course in logic, you will probably recognise the following rules as appearing in Hilbert's presentation of propositional logic:
+
+```agda 
+K : { A B : UU lzero } → A ⇒ (B ⇒ A) 
+K = {!   !}
+
+S : { A B C : UU lzero } → (A ⇒ B ⇒ C) ⇒ (A ⇒ B) ⇒ (A ⇒ C)
+S = {!   !} 
+```
+
+These are called `K` and `S` because they also appear as key players in Moses Schönfinkel's [_Combinatory logic_](https://en.wikipedia.org/wiki/Combinatory_logic), where they are called _(K)onstant_ and _(S)chmelzen_ (which means to _fuse_ or _melt_ in German). Maybe it is more memorable to use the name _substitute_ as the name of the `S` combinator.
+
+Now prove the rule I alluded to above when speaking of the binding power of `⇒`.
+
+```agda 
+∧-implies-∨ : { A B : UU lzero } → A ∧ B ⇒ A ∨ B
+∧-implies-∨ = {!   !}
 ```
