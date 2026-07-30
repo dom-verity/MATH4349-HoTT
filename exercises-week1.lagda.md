@@ -184,7 +184,7 @@ Of course, conjunction should be an **associative** operator, which fact we prov
 
 **Note:** To define the **bodies** of these functions (proofs!) you can either use the native pattern matching facilities of Agda, as above, or you can build them as expressions made out of `∧-intro`, `∧-elim-right` and `∧-elim-left`. Have a go at the latter approach, it gives an answer that is much closer to the kind of proof you would see in a logic textbook.
 
-### Symmetry proof
+### Symmetry and idempotency proofs
 
 Oh I nearly forgot, conjunction is also a **symmetric** operator.
 
@@ -194,6 +194,15 @@ Oh I nearly forgot, conjunction is also a **symmetric** operator.
 ```
 
 Here again, we can either prove this using pattern matching or we can construct a proof expression using `∧-intro`, `∧-elim-right` and `∧-elim-left`.
+
+And conjunction is **idempotent**, in other words the propositions `A` and `A ∧ A` are inter-derivable.
+
+```agda
+∧-idempotent : { A : UU lzero } → A → A ∧ A
+∧-idempotent p = {!   !}
+```
+
+This last rule tells us that given a proof of `A` we can construct a proof of `A ∧ A`. The converse direction of constructing a proof of `A` from one of `A ∧ A` can be achieved directly using either of ‵∧-elim-left` or `∧-elim-right` - _two distinct proofs_. 
 
 ### Disjunction (or)
 
@@ -227,14 +236,39 @@ Disjunction has a single elimination rule which is a little more involved.
 
 ```agda
 ∨-elim : { A B P : UU lzero } → (A → P) → (B → P) → A ∨ B → P
-∨-elim p q r = {!   !}
+∨-elim f g r = {!   !}
 ```
 
 We can interpret this as a logical rule in the following way:
 
-* Given a proof `p : A → P` that from a proof of `A` I can prove `P`, and
-* a proof `q : B → P` that from a proof of `B` I can also prove `P`, then 
-* from a proof `r : A ∨ B` that `A` or `B` holds I get a proof `∨-elim p q r` that `P` holds.
+* Given a procedure `f : A → P` that takes a proof of `A` and returns proof of `P`, and
+* a procedure `g : B → P` that takes a proof of `B` and returns a proof of `P`, then 
+* then `∨-elim f g` is a procedure which takes a proof `r : A ∨ B` that `A` or `B` holds and returns a proof `∨-elim f g r` that `P` holds.
 
+#### Associativity, symmetry and idempotency laws
+
+The disjunction operator is also associative, symmetric and idempotent. Try proving the following rules first by pattern matching and then by constructing expressions using `∨-intro-left`, `∨-intro-right` and `∨-elim`.
+
+TBC
+
+#### Distributive laws
+
+In arithmetic we know that multiplication distributes over addition. Corresponding laws hold for conjunction and disjunction, though somehow it always surprises me the `∧` distributes over `∨` **and** `∨` distributes over `∧` - I guess because addition doesn't distribute over multiplication.
+
+To demonstrate that these distributive laws do indeed hold, provide proofs of the following rules.
+
+```agda 
+∧-distributes-over-∨ : { A B C : UU lzero } → A ∧ (B ∨ C) → (A ∧ B) ∨ (A ∧ C)
+∧-distributes-over-∨ p = {!   !}
+
+∧-distributes-over-∨' : { A B C : UU lzero } → (A ∧ B) ∨ (A ∧ C)→ A ∧ (B ∨ C)
+∧-distributes-over-∨' p = {!   !}
+
+∨-distributes-over-∧ : { A B C : UU lzero } → A ∨ (B ∧ C) → (A ∨ B) ∧ (A ∨ C)
+∨-distributes-over-∧ p = {!   !}
+
+∨-distributes-over-∧' : { A B C : UU lzero } → (A ∨ B) ∧ (A ∨ C) → A ∨ (B ∧ C)
+∨-distributes-over-∧' p = {!   !}
+```
 
 
