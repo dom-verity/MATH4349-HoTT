@@ -122,6 +122,30 @@ parity : ℕ → Parity
 parity n = {!   !}
 ```
 
+### More exercises
+
+#### Exercise 1.5a: 
+
+Define a binary function `exp-ℕ` which raises one natural number to the power of another.
+
+#### Exercise 1.5b: 
+
+Define a binary function `min-ℕ` which takes two natural numbers and returns their minimum.
+
+#### Exercise 1.5c: 
+
+Define a binary function `max-ℕ` which takes two natural numbers and returns their maximum.
+
+#### Exercise 1.5d:
+
+Define a function `factorial-ℕ` which takes a natural number and returns its factorial.
+
+#### Exercise 1.5e:
+
+Define the binary function `_choose-ℕ_` which returns the number of ways of choosing `r` things from amongst `n` things.
+
+**Note** here the underscores surrounding `choose-ℕ` tell Agda that you want to use infix notation for this function. This enables us to write expressions like `n choose-ℕ k`.
+
 ## Some logic
 
 Dependent type theory invites us to regard types and mathematical propositions as interchangeable. Later we will see that homotopy type theory refines this idea a little, by identifying a suitable sub-collection of type that behave even more like traditional propositions.
