@@ -273,7 +273,19 @@ We can interpret this as a logical rule in the following way:
 
 The disjunction operator is also associative, symmetric and idempotent. Try proving the following rules first by pattern matching and then by constructing expressions using `∨-intro-left`, `∨-intro-right` and `∨-elim`.
 
-TBC
+```agda 
+∨-symm : { A B : UU lzero } → A ∨ B → B ∨ A 
+∨-symm p = {!   !}
+
+∨-assoc-left : { A B C : UU lzero } → A ∨ (B ∨ C) → (A ∨ B) ∨ C 
+∨-assoc-left p = {!   !}
+
+∨-assoc-right : { A B C : UU lzero } → (A ∨ B) ∨ C → A ∨ (B ∨ C)
+∨-assoc-right p = {!   !}
+
+∨-idempotent : { A : UU lzero } → A ∨ A → A 
+∨-idempotent p = {!   !}
+```
 
 #### Distributive laws
 
