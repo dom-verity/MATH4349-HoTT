@@ -68,7 +68,7 @@ Later on we will see how we can build a function which encapsulates the the usua
 
 For the moment, we'll just amuse ourselves with some basic exercises: 
 
-**Note:** To insert the natural number symbol ℕ type the character sequence "\\-b-N". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\\" we enter _unicode input mode_, which allows us to translate the subsequent character sequence into a unicode symbol.
+**Note:** To insert the natural number symbol ℕ type the character sequence "\\bN". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\\" we enter _unicode input mode_, which allows us to translate the subsequent character sequence into a unicode symbol.
 
 ### Exercise 1.1: Define a function to add two natual numbers:
 
@@ -160,12 +160,14 @@ We would like our conjunction operation to be given in standard **infix** notati
 infixr 2 _∧_
 ```
 
+**Note:** you can enter a conjunction symbol `∧` by typing "\\and".
+
 There is a variant of this directive called `infixl` which we use to tell Agda to regard a operator as associated to the **left**. The integer supplied to `infixr` or `infixl` before the operator symbol being declared is called the **precedence** of the operator. The higher the precedence of an operator the more tightly it binds to its arguments.
 
 The **terms** of type `A ∧ B` should correspond to **proofs** of that proposition. Of course, to prove `A ∧ B` we must provide two proofs, one of `A` and one of `B`, so the terms of conjunction as a data type should be pairs. Accordingly we get the following data type declaration:
 
 ```agda 
-data _∧_ (A B : UU lzero) : UU lzero where
+data _∧_ ( A B : UU lzero ) : UU lzero where
     pair : A → B → A ∧ B
 ```
 
@@ -213,7 +215,7 @@ Of course, conjunction should be an **associative** operator, which fact we prov
 Oh I nearly forgot, conjunction is also a **symmetric** operator.
 
 ```agda 
-∧-symm : {A B : UU lzero } → A ∧ B → B ∧ A 
+∧-symm : { A B : UU lzero } → A ∧ B → B ∧ A 
 ∧-symm p = {!   !}
 ```
 
@@ -236,17 +238,19 @@ Here again we start by making `∨` a right associated infix operator.
 infixr 1 _∨_
 ```
 
+**Note:** you can enter a disjunction symbol `∨` by typing "\\or".
+
 Notice here that we gave `∧` the precedence 2 and `∨` the precedence 1 so **and** binds more tightly to its arguments than **or** does. So, for example, Agda now brackets the expression `A ∧ B ∨ C` as `(A ∧ B) ∨ C`.
 
 ```agda 
-data _∨_ (A B : UU lzero) : UU lzero where
+data _∨_ ( A B : UU lzero ) : UU lzero where
     inl : A → A ∨ B
     inr : B → A ∨ B
 ```
 
 #### Introduction and elimination rules
 
-Here again the introduction rules for disjunction are simply the constructors `inl` (in left) and `inr` (in right) given in the body of the `data` declaraion for `∨`. When viewed as introduction rules these traditionally revel in the names `∨-intro-left` and `∨-intro-right`, so we introduce those names as aliases for the constructors of `∨` here.
+Here again the introduction rules for disjunction are simply the constructors `inl` (in left) and `inr` (in right) given in the body of the `data` declaration for `∨`. When viewed as introduction rules these traditionally revel in the names `∨-intro-left` and `∨-intro-right`, so we introduce those names as aliases for the constructors of `∨` here.
 
 ```agda 
 ∨-intro-left : { A B : UU lzero } → A → A ∨ B
@@ -307,4 +311,32 @@ To demonstrate that these distributive laws do indeed hold, provide proofs of th
 ∨-distributes-over-∧' p = {!   !}
 ```
 
+### Implication
 
+Conjunction and disjunction are all well and good, but what about implication and those pesky quantifiers of the underworld of first order logic? We'll start with implication, specifying that is an infix operator....
+
+```agda
+infixr 0 _⇒_
+```
+
+**Notes:** You can enter an implication symbol `⇒` by typing "\=>". We've given this operator the lowest possible precedence 0 so it binds less tightly than either `∨` or `∧`. So the expression `A ∧ B ⇒ A ∨ B` is bracketed by Agda as `(A ∧ B) ⇒ (A ∨ B)`.
+
+#### Introduction and elimination
+
+... with the following declaration.
+
+```agda
+data _⇒_ (A B : UU lzero) : UU lzero where
+    ⇒-intro : (A → B) → A ⇒ B
+```
+
+This defines our introduction rule, which can be interpreted as saying:
+
+> Suppose we are given a procedure `f : A → B` which takes a proof of `A` and constructs a proof of `B` then we can build a proof `⇒-intro f` of `A ⇒ B`.
+
+The elimination rule for implication is traditionally called **modus ponens**, but we will follow our naming convention and call it the less interesting sounding `⇒-elim`.
+
+```agda
+⇒-elim : { A B : UU lzero } → (A ⇒ B) → A → B
+⇒-elim p a = {!   !}
+```
