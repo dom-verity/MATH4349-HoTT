@@ -70,11 +70,12 @@ For the moment, we'll just amuse ourselves with some basic exercises:
 
 **Note:** To insert the natural number symbol ℕ type the character sequence "\\bN". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\\" we enter _unicode input mode_, which allows us to translate the subsequent character sequence into a unicode symbol.
 
-### Exercise 1.1: Define a function to add two natual numbers:
+### Exercise 1.1: Define a function to add two natural numbers:
 
 ```agda 
 add-ℕ : ℕ → ℕ → ℕ
-add-ℕ n m = {!   !}
+add-ℕ zero-ℕ m = m
+add-ℕ (succ-ℕ n) m = succ-ℕ (add-ℕ n m)
 ```
 
 **Hint:** pattern match the first parameter `n` and you'll then two cases `n = ℕ-zero` and `n = ℕ-zero n'`for some value `n'`. The first case is easy (0 + m = m) but the second case requires us to **recurse** by computing `add-ℕ n' m` and then returning its successor ((n + 1) + m = (n + m) + 1).
@@ -83,7 +84,8 @@ add-ℕ n m = {!   !}
 
 ```agda
 mul-ℕ : ℕ → ℕ → ℕ
-mul-ℕ n m = {!   !}
+mul-ℕ zero-ℕ m = zero-ℕ
+mul-ℕ (succ-ℕ n) m = add-ℕ ((mul-ℕ n m)) m
 ```
 
 **Hint:** here again pattern match on the first variable `n`, but now you will need to use your `add-ℕ` function in the case where a recursive call to `mul-ℕ` is called for. More specifically, our cases implement the defining equations `0 * m = 0` and `(n + 1) * m = n * m + m`.
@@ -177,7 +179,7 @@ We can think of the **constructor** `pair` as an **introduction rule**, it tells
 
 ```agda 
 ∧-elim-left : { A B : UU lzero } → A ∧ B → A
-∧-elim-left p = {!   !}
+∧-elim-left (pair p q) = p
 
 ∧-elim-right : { A B : UU lzero } → A ∧ B → B
 ∧-elim-right p = {!   !}
@@ -264,7 +266,8 @@ Disjunction has a single elimination rule which is a little more involved.
 
 ```agda
 ∨-elim : { A B P : UU lzero } → (A → P) → (B → P) → A ∨ B → P
-∨-elim f g r = {!   !}
+∨-elim f g (inl a) = f a
+∨-elim f g (inr b) = g b
 ```
 
 We can interpret this as a logical rule in the following way:
