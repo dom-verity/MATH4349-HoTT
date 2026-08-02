@@ -371,3 +371,24 @@ Now prove the rule I alluded to above when speaking of the binding power of `⇒
 ∧-implies-∨ : { A B : UU lzero } → A ∧ B ⇒ A ∨ B
 ∧-implies-∨ = {!   !}
 ```
+
+### True and false
+
+One thing we forgot to do earlier was to define propositions representing the truth values **true** and **false**.
+
+First let's define the proposition `false` (or as it is sometimes known **absurdity**), which is given by the following data declaration.
+
+```agda
+data False : UU lzero where
+```
+
+Notice here that this data type has **no** constructors, so the the propostion it represents has no introduction rules. This is not really a surprise, since there should be no wat to construct the absurd proposition in a consistent logical system.
+
+We can prove that `false` implies any other proposition, that is we have the following elimination term in Agda.
+
+```agda 
+false-elim : { A : UU lzero } → False → A 
+false-elim p = {!   !}
+```
+
+Try entering the parameter `p` into the hole (delimited by `{! !}`) and do a _case split_ (ctrl-C ctrl-C). To find out more about exactly what the code just generated means you should now read the section on [Function Definitions](https://agda.readthedocs.io/en/latest/language/function-definitions.html) in the Agda documentation, paying particular attention to the section entitled _Absurd patterns_.
