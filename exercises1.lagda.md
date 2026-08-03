@@ -70,6 +70,8 @@ For the moment, we'll just amuse ourselves with some basic exercises:
 
 **Note:** To insert the natural number symbol ℕ type the character sequence "\\bN". Watch what happens at the bottom of the Visual Studio Code as you do for clues on how to insert other mathematical characters. By typing "\\" we enter _unicode input mode_, which allows us to translate the subsequent character sequence into a unicode symbol.
 
+**Late note:** Oh one thing I forgot to say originally is that the symbol `→` in the type signatures of our functions and data declarations is typed using the key sequence "\\->" or "\\to".
+
 ### Exercise 1.1: Define a function to add two natural numbers:
 
 ```agda 
@@ -322,7 +324,7 @@ Conjunction and disjunction are all well and good, but what about implication an
 infixr 0 _⇒_
 ```
 
-**Notes:** You can enter an implication symbol `⇒` by typing "\=>". We've given this operator the lowest possible precedence 0 so it binds less tightly than either `∨` or `∧`. So the expression `A ∧ B ⇒ A ∨ B` is bracketed by Agda as `(A ∧ B) ⇒ (A ∨ B)`.
+**Notes:** You can enter an implication symbol `⇒` by typing "\\=>". We've given this operator the lowest possible precedence 0 so it binds less tightly than either `∨` or `∧`. So the expression `A ∧ B ⇒ A ∨ B` is bracketed by Agda as `(A ∧ B) ⇒ (A ∨ B)`.
 
 #### Introduction and elimination
 
@@ -376,19 +378,63 @@ Now prove the rule I alluded to above when speaking of the binding power of `⇒
 
 One thing we forgot to do earlier was to define propositions representing the truth values **true** and **false**.
 
-First let's define the proposition `false` (or as it is sometimes known **absurdity**), which is given by the following data declaration.
+First let's define the false proposition `⊥` (or as it is sometimes known **absurdity**), which is pronounced _bottom_, typed using the key sequence "\\bot", and given by the following data declaration.
 
 ```agda
-data False : UU lzero where
+data ⊥ : UU lzero where
 ```
 
-Notice here that this data type has **no** constructors, so the the propostion it represents has no introduction rules. This is not really a surprise, since there should be no wat to construct the absurd proposition in a consistent logical system.
+Notice here that this data type has **no** constructors, so the the propostion it represents has no introduction rules. This is not really a surprise, since there should be no way to construct the absurd proposition in a consistent logical system.
 
-We can prove that `false` implies any other proposition, that is we have the following elimination term in Agda.
+We can prove that `⊥` implies any other proposition, that is we have the following elimination term in Agda.
 
 ```agda 
-false-elim : { A : UU lzero } → False → A 
+false-elim : { A : UU lzero } → ⊥ → A 
 false-elim p = {!   !}
 ```
 
-Try entering the parameter `p` into the hole (delimited by `{! !}`) and do a _case split_ (ctrl-C ctrl-C). To find out more about exactly what the code just generated means you should now read the section on [Function Definitions](https://agda.readthedocs.io/en/latest/language/function-definitions.html) in the Agda documentation, paying particular attention to the section entitled _Absurd patterns_.
+To prove this rule try entering the parameter `p` into the hole (delimited by `{! !}`) and do a _case split_ (ctrl-C ctrl-C). To find out more about exactly what the code just generated means you should now read the section on [Function Definitions](https://agda.readthedocs.io/en/latest/language/function-definitions.html) in the Agda documentation, paying particular attention to the section entitled _Absurd patterns_.
+
+It is now traditional to define the **negation** operator in terms of implication `⇒` and false `⊥` as follows. First we declare a _prefix_ symbol for negation and give it a higher binding precedence that the other logical operators, since negation should bind very tightly to its arguments.
+
+```agda
+infix 3 ¬_
+```
+
+Notice that although the operator `¬` has been declared using the `infix` directive it is still a prefix operator, because it is only followed by an underscore (representing where its argument should occur) rather than surrounded by underscores. Now we declare the following **type alias**.
+
+```agda
+¬_ : UU lzero → UU lzero
+¬_ A = A ⇒ ⊥
+```
+
+It's introduction and elimination rules are now easy to prove directly.
+
+```agda
+¬-intro : { A : UU lzero } → (A → ⊥) → ¬ A
+¬-intro f = {!   !}
+
+¬-elim : { A B : UU lzero } → A → ¬ A → B
+¬-elim p q = {!   !}
+```
+The elimination rule here is often called **ex falso quodlibet**, meaning _from falsehood, anything follows_. It says that if we know that both `A` and `¬ A` are provable then we can prove any other proposition `B`. This follows because we can derive absurdity `⊥` from the contradiction between `A` and `¬ A` and that, in turn, allows us to prove any other proposition.
+
+One tautology that it is not possible to prove from these definitions is the double negation rule, sometimes called **reductio ad absurdam** which is often given as `¬ ¬ P ⇒ P`
+
+And finally I guess we should give the somewhat boring true proposition `⊤`, which is pronounced _top_, typed using the key sequence "\\top", and given by the following data declaration.
+
+```agda
+data ⊤ : UU lzero where
+    tt : ⊤
+```
+
+This now has a single constructor `tt`, this represents the default proof of `⊤` which depends upon no assumptions. Following the naming convention for rules that we've been using to date this might also be referred to as `⊤-intro`.
+
+```agda 
+⊤-intro : ⊤
+⊤-intro = tt
+```
+
+I think that is more than enough for week 1/2. In next week's Agda exercises we will learn how to extend our propositional logic to a **predicate calculus** which includes both _universal_ **and** _existential_ quantification. 
+
+
