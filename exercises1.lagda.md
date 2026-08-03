@@ -23,7 +23,7 @@ module exercises1 where
 
 **Note:** the `module-name` must match the base of the file name `module-name.lagda.md`. The extension `.lagda.md` tells Agda that this is a **literate file** written in the markup language [Markdown](https://markdown.org). The contents of the file itself is intended to be a human readable document, with Agda code interspersed throughout and enclosed **fenced code blocks**. These start with \`\`\` or \`\`\`agda on its own line, and end with \`\`\`, also on its own line
 
-Next we import any modules that contain Adga code that this module depends upon.
+Next we import any modules that contain Agda code that this module depends upon.
 
 ```agda
 open import Agda.Primitive public
@@ -384,7 +384,7 @@ First let's define the false proposition `⊥` (or as it is sometimes known **ab
 data ⊥ : UU lzero where
 ```
 
-Notice here that this data type has **no** constructors, so the the propostion it represents has no introduction rules. This is not really a surprise, since there should be no way to construct the absurd proposition in a consistent logical system.
+Notice here that this data type has **no** constructors, so the the proposition it represents has no introduction rules. This is not really a surprise, since there should be no way to construct the absurd proposition in a consistent logical system.
 
 We can prove that `⊥` implies any other proposition, that is we have the following elimination term in Agda.
 
@@ -436,5 +436,3 @@ This now has a single constructor `tt`, this represents the default proof of `�
 ```
 
 I think that is more than enough for week 1/2. In next week's Agda exercises we will learn how to extend our propositional logic to a **predicate calculus** which includes both _universal_ **and** _existential_ quantification. 
-
-
