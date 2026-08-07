@@ -98,7 +98,8 @@ The predecessor maps `0 ↦ 0` and maps `(n + 1) ↦ n`:
 
 ```agda 
 pred-ℕ : ℕ → ℕ
-pred-ℕ n = {!   !}
+pred-ℕ zero-ℕ = zero-ℕ
+pred-ℕ (succ-ℕ n) = n
 ```
 
 ### Exercise 1.4: Define a **parity** function
@@ -121,10 +122,42 @@ parity-to-ℕ Odd = succ-ℕ zero-ℕ
 
 Now define a function which maps the even numbers in `ℕ` to the parity `Even` and the odd numbers to `Odd`.
 
+**Answer note:** This one was a little bit evil, as the simplest solution with the tools we've learnt to this point required the addition of an _auxiliary function_ `switch-parity : Parity → Parity`  to switch parities between `Even` and `Odd`.
+
 ```agda 
+switch-parity : Parity → Parity
+switch-parity Even = Odd
+switch-parity Odd = Even
+
 parity : ℕ → Parity
-parity n = {!   !}
+parity zero-ℕ = Even
+parity (succ-ℕ n) = switch-parity (parity n)
 ```
+
+The auxiliary function `switch-parity` is generally useful, so we probably want to define it anyway. But if we really must insist on avoiding this stand-alone auxiliary definition, Agda provides a few other ways to do this. The first involves using an [_`where` clause_](https://agda.readthedocs.io/en/v2.8.0-r3/language/let-and-where.html#where-blocks), which allows us to define the parity switching function _locally_ within the parity function itself. 
+
+```agda
+parity' : ℕ → Parity
+parity' zero-ℕ = Even
+parity' (succ-ℕ n) = switch-parity' (parity' n)
+    where
+        switch-parity' : Parity → Parity
+        switch-parity' Even = Odd
+        switch-parity' Odd = Even
+```
+
+Now this auxiliary function can only be used in the right hand side of the clause of the definition of `parity'` to which its `where` block is attached. 
+
+Most elegantly, we can use an advanced feature of pattern matching in Agda called the [_`with` abstraction_](https://agda.readthedocs.io/en/v2.8.0-r3/language/with-abstraction.html#with-abstraction) which allows us to directly pattern match on the result of recursively applying the parity function we are defining.
+
+```agda
+parity''' : ℕ → Parity
+parity''' zero-ℕ = Even
+parity''' (succ-ℕ n) with (parity''' n) 
+...                     | Even = Odd
+...                     | Odd = Even
+```
+
 
 ### More exercises
 
@@ -132,23 +165,61 @@ parity n = {!   !}
 
 Define a binary function `exp-ℕ` which raises one natural number to the power of another.
 
+```agda
+exp-ℕ : ℕ → ℕ → ℕ
+exp-ℕ n zero-ℕ = succ-ℕ zero-ℕ
+exp-ℕ n (succ-ℕ e) = mul-ℕ (exp-ℕ n e) n
+```
+
 #### Exercise 1.5b: 
 
 Define a binary function `min-ℕ` which takes two natural numbers and returns their minimum.
+
+```agda
+min-ℕ : ℕ → ℕ → ℕ
+min-ℕ zero-ℕ m = zero-ℕ
+min-ℕ (succ-ℕ m) zero-ℕ = zero-ℕ
+min-ℕ (succ-ℕ n) (succ-ℕ m) = succ-ℕ (min-ℕ n m)
+```
 
 #### Exercise 1.5c: 
 
 Define a binary function `max-ℕ` which takes two natural numbers and returns their maximum.
 
+```agda
+max-ℕ : ℕ → ℕ → ℕ
+max-ℕ zero-ℕ m = m
+max-ℕ n@(succ-ℕ _) zero-ℕ = n
+max-ℕ (succ-ℕ n) (succ-ℕ m) = succ-ℕ (max-ℕ n m)
+```
+
 #### Exercise 1.5d:
 
 Define a function `factorial-ℕ` which takes a natural number and returns its factorial.
+
+```agda
+factorial-ℕ : ℕ → ℕ
+factorial-ℕ zero-ℕ = succ-ℕ zero-ℕ
+factorial-ℕ n@(succ-ℕ n') = mul-ℕ n (factorial-ℕ n')
+```
+
+**Note** this function declaration includes the unfamiliar pattern `n@(succ-ℕ n')`. This matches the argument with the pattern `succ-ℕ n'` as usual, but it causes two variable _bindings_ to be created. The first binds `n` to the whole argument expression and the second binds `n'` to the argument with the outermost constructor `succ-ℕ` stripped of (ie `n' = n - 1`). See the section on [_as-patterns_](https://agda.readthedocs.io/en/v2.8.0-r3/language/function-definitions.html#as-patterns) in the Agda documentation.
 
 #### Exercise 1.5e:
 
 Define the binary function `_choose-ℕ_` which returns the number of ways of choosing `r` things from amongst `n` things.
 
 **Note** here the underscores surrounding `choose-ℕ` tell Agda that you want to use infix notation for this function. This enables us to write expressions like `n choose-ℕ k`.
+
+Rather than expressing this in terms of the factorial function defined above, we instead define it using the Pascal's triangle recursion equations.
+
+```agda
+_choose-ℕ_ : ℕ → ℕ → ℕ
+n choose-ℕ zero-ℕ = succ-ℕ zero-ℕ           -- There is one way of choosing 0 of n things, but
+zero-ℕ choose-ℕ (succ-ℕ r) = zero-ℕ         -- there is no way of choosing 1 or more from 0 things.
+(succ-ℕ n) choose-ℕ r@(succ-ℕ r') =         -- Pascal's recurrence
+    add-ℕ (n choose-ℕ r) (n choose-ℕ r')
+```
 
 ## Some logic
 
@@ -184,7 +255,7 @@ We can think of the **constructor** `pair` as an **introduction rule**, it tells
 ∧-elim-left (pair p q) = p
 
 ∧-elim-right : { A B : UU lzero } → A ∧ B → B
-∧-elim-right p = {!   !}
+∧-elim-right (pair p q) = q
 ```
 
 The names `∧-elim-left` and `∧-elim-right` are traditional for these conjunction elimination rules. Correspondingly, the traditional name for the introduction rule `pair` is `∧-intro`, so for future use we define the following **alias**.
@@ -206,10 +277,11 @@ Of course, conjunction should be an **associative** operator, which fact we prov
 
 ```agda 
 ∧-assoc-right : { A B C : UU lzero } → A ∧ (B ∧ C) → (A ∧ B) ∧ C
-∧-assoc-right p = {!   !}
+∧-assoc-right p = ∧-intro (∧-intro (∧-elim-left p) (∧-elim-left (∧-elim-right p))) 
+                          (∧-elim-right (∧-elim-right p))
 
 ∧-assoc-left : { A B C : UU lzero } → (A ∧ B) ∧ C → A ∧ (B ∧ C)
-∧-assoc-left p = {!   !}
+∧-assoc-left (pair (pair p q) r) = pair p (pair q r)
 ```
 
 **Note:** To define the **bodies** of these functions (proofs!) you can either use the native pattern matching facilities of Agda, as above, or you can build them as expressions made out of `∧-intro`, `∧-elim-right` and `∧-elim-left`. Have a go at the latter approach, it gives an answer that is much closer to the kind of proof you would see in a logic textbook.
@@ -220,7 +292,7 @@ Oh I nearly forgot, conjunction is also a **symmetric** operator.
 
 ```agda 
 ∧-symm : { A B : UU lzero } → A ∧ B → B ∧ A 
-∧-symm p = {!   !}
+∧-symm p = ∧-intro (∧-elim-right p) (∧-elim-left p)
 ```
 
 Here again, we can either prove this using pattern matching or we can construct a proof expression using `∧-intro`, `∧-elim-right` and `∧-elim-left`.
@@ -229,7 +301,7 @@ And conjunction is **idempotent**, in other words the propositions `A` and `A �
 
 ```agda
 ∧-idempotent : { A : UU lzero } → A → A ∧ A
-∧-idempotent p = {!   !}
+∧-idempotent p = ∧-intro p p
 ```
 
 This last rule tells us that given a proof of `A` we can construct a proof of `A ∧ A`. The converse direction of constructing a proof of `A` from one of `A ∧ A` can be achieved directly using either of ‵∧-elim-left` or `∧-elim-right` - _two distinct proofs_. 
@@ -284,16 +356,19 @@ The disjunction operator is also associative, symmetric and idempotent. Try prov
 
 ```agda 
 ∨-symm : { A B : UU lzero } → A ∨ B → B ∨ A 
-∨-symm p = {!   !}
+∨-symm p = ∨-elim ∨-intro-right ∨-intro-left p
 
 ∨-assoc-left : { A B C : UU lzero } → A ∨ (B ∨ C) → (A ∨ B) ∨ C 
-∨-assoc-left p = {!   !}
+∨-assoc-left p = ∨-elim (λ a → ∨-intro-left (∨-intro-left a)) 
+                        (λ bc → ∨-elim (λ b → ∨-intro-left (∨-intro-right b)) ∨-intro-right bc) p
 
 ∨-assoc-right : { A B C : UU lzero } → (A ∨ B) ∨ C → A ∨ (B ∨ C)
-∨-assoc-right p = {!   !}
+∨-assoc-right (inl (inl p)) = inl p
+∨-assoc-right (inl (inr q)) = inr (inl q)
+∨-assoc-right (inr r) = inr (inr r)
 
 ∨-idempotent : { A : UU lzero } → A ∨ A → A 
-∨-idempotent p = {!   !}
+∨-idempotent p = ∨-elim (λ x → x) (λ x → x) p
 ```
 
 #### Distributive laws
@@ -304,16 +379,24 @@ To demonstrate that these distributive laws do indeed hold, provide proofs of th
 
 ```agda 
 ∧-distributes-over-∨ : { A B C : UU lzero } → A ∧ (B ∨ C) → (A ∧ B) ∨ (A ∧ C)
-∧-distributes-over-∨ p = {!   !}
+∧-distributes-over-∨ p = ∨-elim (λ b → ∨-intro-left (∧-intro (∧-elim-left p) b))
+                                (λ c → ∨-intro-right (∧-intro (∧-elim-left p) c)) (∧-elim-right p)
 
 ∧-distributes-over-∨' : { A B C : UU lzero } → (A ∧ B) ∨ (A ∧ C)→ A ∧ (B ∨ C)
-∧-distributes-over-∨' p = {!   !}
+∧-distributes-over-∨' p = ∨-elim (λ ab → ∧-intro (∧-elim-left ab) (∨-intro-left (∧-elim-right ab))) 
+                                 (λ ac → ∧-intro (∧-elim-left ac) (∨-intro-right (∧-elim-right ac))) p
 
 ∨-distributes-over-∧ : { A B C : UU lzero } → A ∨ (B ∧ C) → (A ∨ B) ∧ (A ∨ C)
-∨-distributes-over-∧ p = {!   !}
+∨-distributes-over-∧ p = 
+    ∨-elim (λ a → ∧-intro (∨-intro-left a) (∨-intro-left a)) 
+           (λ bc → ∧-intro (∨-intro-right (∧-elim-left bc)) (∨-intro-right (∧-elim-right bc))) p
 
 ∨-distributes-over-∧' : { A B C : UU lzero } → (A ∨ B) ∧ (A ∨ C) → A ∨ (B ∧ C)
-∨-distributes-over-∧' p = {!   !}
+∨-distributes-over-∧' p = 
+    ∨-elim ∨-intro-left 
+           (λ b → ∨-elim ∨-intro-left 
+                         (λ c → ∨-intro-right (∧-intro b c)) (∧-elim-right p)) 
+           (∧-elim-left p)
 ```
 
 ### Implication
@@ -343,7 +426,7 @@ The elimination rule for implication is traditionally called **modus ponens**, b
 
 ```agda
 ⇒-elim : { A B : UU lzero } → (A ⇒ B) → A → B
-⇒-elim p a = {!   !}
+⇒-elim (⇒-intro p) a = p a
 ```
 
 As a simple example, we would expect there to be a proof that `A ⇒ A` holds for any proposition `A`, and this is indeed the case as demonstrated by the following rule definition.
@@ -359,10 +442,10 @@ If you've done a traditional course in logic, you will probably recognise the fo
 
 ```agda 
 K : { A B : UU lzero } → A ⇒ (B ⇒ A) 
-K = {!   !}
+K = ⇒-intro (λ a → ⇒-intro (λ b → a))
 
 S : { A B C : UU lzero } → (A ⇒ B ⇒ C) ⇒ (A ⇒ B) ⇒ (A ⇒ C)
-S = {!   !} 
+S = ⇒-intro (λ f → ⇒-intro (λ g → ⇒-intro (λ a → ⇒-elim (⇒-elim f a) (⇒-elim g a)))) 
 ```
 
 These are called `K` and `S` because they also appear as key players in Moses Schönfinkel's [_Combinatory logic_](https://en.wikipedia.org/wiki/Combinatory_logic), where they are called _(K)onstant_ and _(S)chmelzen_ (which means to _fuse_ or _melt_ in German). Maybe it is more memorable to use the name _substitute_ as the name of the `S` combinator. Schönfinkel's name for `⇒-identity` was simply `I` for _(I)dentity_ I guess.
@@ -371,7 +454,7 @@ Now prove the rule I alluded to above when speaking of the binding power of `⇒
 
 ```agda 
 ∧-implies-∨ : { A B : UU lzero } → A ∧ B ⇒ A ∨ B
-∧-implies-∨ = {!   !}
+∧-implies-∨ = ⇒-intro (λ p → ∨-intro-left (∧-elim-left p))
 ```
 
 ### True and false
@@ -390,7 +473,7 @@ We can prove that `⊥` implies any other proposition, that is we have the follo
 
 ```agda 
 false-elim : { A : UU lzero } → ⊥ → A 
-false-elim p = {!   !}
+false-elim ()
 ```
 
 To prove this rule try entering the parameter `p` into the hole (delimited by `{! !}`) and do a _case split_ (ctrl-C ctrl-C). To find out more about exactly what the code just generated means you should now read the section on [Function Definitions](https://agda.readthedocs.io/en/latest/language/function-definitions.html) in the Agda documentation, paying particular attention to the section entitled _Absurd patterns_.
@@ -412,10 +495,10 @@ It's introduction and elimination rules are now easy to prove directly.
 
 ```agda
 ¬-intro : { A : UU lzero } → (A → ⊥) → ¬ A
-¬-intro f = {!   !}
+¬-intro f = ⇒-intro f
 
 ¬-elim : { A B : UU lzero } → A → ¬ A → B
-¬-elim p q = {!   !}
+¬-elim p (⇒-intro f) = false-elim (f p)
 ```
 The elimination rule here is often called **ex falso quodlibet**, meaning _from falsehood, anything follows_. It says that if we know that both `A` and `¬ A` are provable then we can prove any other proposition `B`. This follows because we can derive absurdity `⊥` from the contradiction between `A` and `¬ A` and that, in turn, allows us to prove any other proposition.
 
