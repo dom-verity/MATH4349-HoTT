@@ -364,3 +364,6 @@ tt_axiom_of_choice : {i j k : Level}{A : UU i}{B : UU j}{P : A → B → UU k} �
        ∀' x , (∃' y , P x y) → ∃' f , (∀' x , P x (f x))
 tt_axiom_of_choice p = {!   !}
 ```
+
+**Note:** We might not expect this result to be true without assumption, because we can embed Zermelo-Frankel set theory without choice in dependent type theory and we know that the axiom of choice is independent of the other axioms of set theory. In the context of the intuitionistic logic of our type theory, however, this result is actually quite a bit weaker that the classical axiom of choice. Indeed, if we were to assume the "full strength" axiom of choice in our system we could then prove that the law of the excluded middle (or equivalently double negation elimination), thus making our logic classical.
+
