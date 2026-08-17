@@ -124,7 +124,7 @@ ex-falso = ind-∅
 We can also follow the line of reasoning we took when we were discussing propositional logic, by defining negation in terms of `→` (implication) and `∅` (bottom), and then prove the contraposition rule ([Rijke](https://arxiv.org/abs/2212.11082) proposition 4.3.4).
 
 ```agda
-infix  3 ¬_
+infix  30 ¬_
 
 ¬_ : {i : Level} → UU i → UU i 
 ¬ A = A → ∅
@@ -196,7 +196,7 @@ In section 4.5 of [Rijke](https://arxiv.org/abs/2212.11082) the integers are def
 ℤ = ℕ + (𝟙 + ℕ)
 ```
 
-Notice that in this encoding the numbers `0`, `-1` and `1` have the encodings `inr (inl ∗)`, `inl zero-ℕ`, and `inr (inr zero-ℕ)`. I find using these a little confusing so I found it convenient to introduce the following [_Pattern Synonyms_](https://agda.readthedocs.io/en/latest/language/pattern-synonyms.html) for these and for the inclusions of `ℕ` onto the positive and negative integers.
+Notice that in this encoding the numbers `0`, `-1` and `1` have the encodings `inr (inl ∗)`, `inl zero-ℕ`, and `inr (inr zero-ℕ)`. I find using these a little confusing so I found it convenient to introduce the following [_Pattern Synonyms_](https://agda.readthedocs.io/en/stable/language/pattern-synonyms.html) for these and for the inclusions of `ℕ` onto the positive and negative integers.
 
 ```agda
 pattern zero-ℤ = inr (inl ∗)
@@ -221,7 +221,7 @@ ind-ℤ a a+ f a- g neg-one-ℤ = a-
 ind-ℤ {A = A} a a+ f a- g (in-neg (succ-ℕ n)) = g (ind-ℤ {A = A} a a+ f a- g (in-neg n))
 ```
 
-Persuading Agda to correctly type this definition is slightly delicate. This explains the patterns `{A = A}` on the left and the parameters `{A = A}` on the right. The function `ind-ℤ` is declared to have an implicit type family parameter `A` and it needs to know that when we make a recursive call to `ind-ℤ` we intend that call to be made using that same type parameter. Unfortunately we can't just bind that parameter to a variable on the left and then pass that on to the recursive calls on the right as usual because that parameter in implicit. The way around this is the notation `{A = A}`, on the left that says _bind a variable `A` to the value of the implicit parameter also called `A`_ and on the right it says _pass the type family `A` as the value of the implicit parameter `A`_. You can find out more about how to handle this kind of shenanigans in the [_Implicit Arguments_](https://agda.readthedocs.io/en/latest/language/implicit-arguments.html) of the Agda manual.
+Persuading Agda to correctly type this definition is slightly delicate. This explains the patterns `{A = A}` on the left and the parameters `{A = A}` on the right. The function `ind-ℤ` is declared to have an implicit type family parameter `A` and it needs to know that when we make a recursive call to `ind-ℤ` we intend that call to be made using that same type parameter. Unfortunately we can't just bind that parameter to a variable on the left and then pass that on to the recursive calls on the right as usual because that parameter in implicit. The way around this is the notation `{A = A}`, on the left that says _bind a variable `A` to the value of the implicit parameter also called `A`_ and on the right it says _pass the type family `A` as the value of the implicit parameter `A`_. You can find out more about how to handle this kind of shenanigans in the [_Implicit Arguments_](https://agda.readthedocs.io/en/stable/language/implicit-arguments.html) of the Agda manual.
 
 Now we can define the _successor_ function for `ℤ` as discussed in definition 4.5.3 of [Rijke](https://arxiv.org/abs/2212.11082). 
 
@@ -253,6 +253,60 @@ succ-ℤ' neg-one-ℤ = zero-ℤ
 succ-ℤ' (in-neg (succ-ℕ n)) = in-neg n 
 ```
 
+## Dependent sums
+
+The **dependent sum** type, often referred to as the **Σ-type** (pronounced "Sigma type"), of a type family is called the **dependent pair type** in section 4.6 of [Rijke](https://arxiv.org/abs/2212.11082). As that latter name implies, if `A : UU i` is a type and `B : A → UU j` is a type family then the Σ-type of `B` is the type  `dsum A B : UU (i ⊔ j)` whose elements are of the form `pair a b` where `a : A` and `b : B a`. Such things are called _dependent_ pairs because the type of the second component `b` of `pair a b` _depends_ upon the first component `a`. In Agda this idea is implemented in the following `data` type declaration.
+
+```agda
+data dsum {i j : Level} (A : UU i) (B : A → UU j) : UU (i ⊔ j) where
+    pair : (a : A) → B a → dsum A B
+```
+
+We can now introduce two pieces of handy notation, first a [_Syntax Declaration_](https://agda.readthedocs.io/en/stable/language/syntax-declarations.html) which allows us to use `Σ` notation for dependent sums in a manner close to the way they are often annotated on paper.
+
+```agda
+syntax dsum A (λ x → B) = Σ x ∈ A , B
+```
+
+Then notation for the special case where the type `B` does not depend on the type `A`, as in definition 4.6.4 of [Rijke](https://arxiv.org/abs/2212.11082).
+
+```agda
+infixr 10 _×_
+
+_×_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
+A × B = Σ x ∈ A , B
+```
+
+In an ironic quirk of fate, the type `A × B` is usually referred to as the _(Cartesian) product_ of types `A` and `B`. Its elements are pairs `pair a b` of elements `a : A` and `b : B` much as the product of two sets contains elements that are pairs of the elements in each factor.
+
+**Note:** the operator names appearing in these definitions can be typed in Visual Studio Code using the following key sequences:
+
+* The _sum type (Sigma) operator_ `Σ` is entered using the key sequence "\\Sigma",
+* The _element of operator_ `∈` is entered using the key sequence "\\in", and
+* The _product operator_ `×` is entered using the key sequence "\\times" or "\\x".
+
+Sum types come with _projection_ functions, definition 4.6.2 of [Rijke](https://arxiv.org/abs/2212.11082), which map pairs to their first and second components respectively.
+
+```agda
+pr₁ : {i j : Level}{A : UU i}{B : A → UU j} → Σ a ∈ A , B a → A
+pr₁ (pair a b) = a
+
+pr₂ : {i j : Level}{A : UU i}{B : A → UU j} → (p : Σ a ∈ A , B a) → B (pr₁ p)
+pr₂ (pair a b) = b 
+```
+
+**Note** The type of the second projection `pr₂` is a little finicky, because the output type of this function depends on the first component of its input parameter. Consequently, we define the first projection `pr₁` and use it in specifying the output type of the second projection `pr₂`.
+
+As explained in remark 4.6.3 of [Rijke](https://arxiv.org/abs/2212.11082), for each type family `C : Σ x ∈ A , B x → UU k` the induction principle for the Σ-type constructs a dependent function `(p : Σ x ∈ A , B x) → P p` out of a two parameter dependent function `f : (a : A) → (b : P a) → P (pair a b)`, as follows.
+
+```agda
+ind-Σ : {i j k : Level}{A : UU i}{B : A → UU j}{C : Σ x ∈ A , B x → UU k} → 
+        ((a : A) → (b : B a) → C (pair a b)) → (p : Σ x ∈ A , B x) → C p
+ind-Σ f (pair a b) = f a b
+```
+
+**Note:** 
+
 ## Exercises
 
 The following are largely the exercises from chapter 4 of [Rijke](https://arxiv.org/abs/2212.11082) converted into a form that Agda will understand.
@@ -266,7 +320,7 @@ pred-ℤ : ℤ → ℤ
 pred-ℤ z = {!   !}
 ```
 
-### Exercise 4.2 (b)
+### Exercise 4.1 (b)
 
 Define the additive group operations on `ℤ`.
 
@@ -278,4 +332,65 @@ neg-ℤ : ℤ → ℤ
 neg-ℤ z = {!   !}
 ```
 
+### Exercise 4.2
 
+Define the type `bool :: UU lzero` of _booleans_, which contains two generic elements `true :: bool` and `false :: bool`, using a algebraic `data` type declaration in Agda. Now define the following functions
+
+* The **boolean negation** function `¬-bool : bool → bool`,
+* The **boolean conjunction** function `_∧_ : bool → bool → bool`, and
+* The **boolean disjunction** function `_∨_ : bool → bool → bool`.
+* The **boolean implication** function `_⇒_ : bool → bool → bool` (**hint:** this can be defined in terms of the booleans negation and disjunction functions).
+
+### Exercise 4.3
+
+**Note:** These exercises involve (double) negation and so they can be expected to be a little tricky. That said, if you did the double negation exercises in `exercises2.lagda.md` many of these will be familiar.
+
+For types `P` and `Q` we shall write `P ↔ Q` for the **bi-implication** which is defined to be the product type `(P → Q) × (Q → P)`. Note here that the bi-implication operator `↔` can be entered by typing the key sequence `\\lr`.
+
+```agda
+infixr 0 _↔_
+
+_↔_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
+A ↔ B = (A → B) × (B → A)
+```
+
+#### Ex 4.3.1
+
+Show that:
+1. `¬ (P × ¬ P)`
+2. `¬ (P ↔ ¬ P)`
+
+**Note:** in other words your task is to construct a term that inhabits each of these types.
+
+```agda
+non-contradiction : {i : Level}{P : UU i} → ¬ (P × ¬ P)
+non-contradiction p = {!   !}
+
+not-P-iff-not-P : {i : Level}{P : UU i} → ¬ (P ↔ ¬ P)
+not-P-iff-not-P p = {!   !}
+```
+
+**Note:** By definition `¬ (P × ¬ P)` and `¬ (P ↔ ¬ P)` are function types with output type `∅` and input types `P × ¬ P` and `P ↔ ¬ P` respectively. Consequently, the type of the parameter `p` I've given in these definitions is `P × ¬ P` in the first and `P ↔ ¬ P` in the second. You can see this for yourself by loading this file into Agda in Visual Studio Code, moving to each hole on the right hand side above in turn, and typing "ctrl-X ctrl-E" to show the _environment_ of variables that are in scope in that hole.
+
+**Hint:** In 2. case split on the parameter `p` which unfolds it into two functions `f : P → ¬ P` and `g : ¬ P → P`, but by definition `¬ P = P → ∅` so the type of `f` expands to `f : P → P → ∅`. So use `f` to construct a term of type `¬ P` and then use that and `g` to also construct a term of type `P`. From here its a downhill run.
+
+#### Ex 4.3.2
+
+Construct maps of the following types, which are all part of a thing called the **double negation monad**.
+
+1. `P → ¬ ¬ P` double negation introduction.
+2. `(P → Q) ­→ (¬ ¬ P → ¬ ¬ Q)` the functoriality of double negation.
+3. `(P → ¬ ¬ Q) → (¬ ¬ P → ¬ ¬ Q)` Kleisli extension.
+
+```agda
+¬¬-intro : {i : Level}{P : UU i} → P → ¬ ¬ P 
+¬¬-intro p = {!   !}
+
+¬¬-func : {i j : Level}{P : UU i}{Q : UU j} → (P → Q) → (¬ ¬ P → ¬ ¬ Q)
+¬¬-func f = {!   !}
+
+¬¬-kleisli : {i j : Level}{P : UU i}{Q : UU j} → (P → ¬ ¬ Q) → (¬ ¬ P → ¬ ¬ Q)
+¬¬-kleisli f = {!   !}
+```
+
+**Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole move to that hole and type "ctrl-X ctrl-E".   
