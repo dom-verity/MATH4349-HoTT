@@ -384,13 +384,13 @@ Construct maps of the following types, which are all part of a thing called the 
 
 ```agda
 ¬¬-intro : {i : Level}{P : UU i} → P → ¬ ¬ P 
-¬¬-intro p = {!   !}
+¬¬-intro = {!   !}
 
 ¬¬-func : {i j : Level}{P : UU i}{Q : UU j} → (P → Q) → (¬ ¬ P → ¬ ¬ Q)
-¬¬-func f = {!   !}
+¬¬-func = {!   !}
 
 ¬¬-kleisli : {i j : Level}{P : UU i}{Q : UU j} → (P → ¬ ¬ Q) → (¬ ¬ P → ¬ ¬ Q)
-¬¬-kleisli f = {!   !}
+¬¬-kleisli = {!   !}
 ```
 
 **Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole move to that hole and type "ctrl-X ctrl-E".   
