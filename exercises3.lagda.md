@@ -124,7 +124,7 @@ ex-falso = ind-∅
 We can also follow the line of reasoning we took when we were discussing propositional logic, by defining negation in terms of `→` (implication) and `∅` (bottom), and then prove the contraposition rule ([Rijke](https://arxiv.org/abs/2212.11082) proposition 4.3.4).
 
 ```agda
-infix  30 ¬_
+infixr 30 ¬_
 
 ¬_ : {i : Level} → UU i → UU i 
 ¬ A = A → ∅
@@ -305,7 +305,7 @@ ind-Σ : {i j k : Level}{A : UU i}{B : A → UU j}{C : Σ x ∈ A , B x → UU k
 ind-Σ f (pair a b) = f a b
 ```
 
-**Note:** 
+**Note:** This function is sometimes called **un-currying** in honour of [_Haskell Curry_](https://en.wikipedia.org/wiki/Haskell_Curry), it is inverse to the [_currying_](https://en.wikipedia.org/wiki/Currying) operation. Actually the idea of representing two parameter functions as functions that take a single parameter and return a function with a single parameter is originally due to [_Gottlob Frege_](https://en.wikipedia.org/wiki/Gottlob_Frege) and was developed in its modern form by [_Moses Schönfinkel_](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel).
 
 ## Exercises
 
@@ -354,7 +354,7 @@ _↔_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
 A ↔ B = (A → B) × (B → A)
 ```
 
-#### Ex 4.3.1
+#### Ex 4.3.a
 
 Show that:
 1. `¬ (P × ¬ P)`
@@ -374,7 +374,7 @@ not-P-iff-not-P p = {!   !}
 
 **Hint:** In 2. case split on the parameter `p` which unfolds it into two functions `f : P → ¬ P` and `g : ¬ P → P`, but by definition `¬ P = P → ∅` so the type of `f` expands to `f : P → P → ∅`. So use `f` to construct a term of type `¬ P` and then use that and `g` to also construct a term of type `P`. From here its a downhill run.
 
-#### Ex 4.3.2
+#### Ex 4.3.b
 
 Construct maps of the following types, which are all part of a thing called the **double negation monad**.
 
@@ -393,4 +393,87 @@ Construct maps of the following types, which are all part of a thing called the 
 ¬¬-kleisli = {!   !}
 ```
 
-**Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole move to that hole and type "ctrl-X ctrl-E".   
+**Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole, move to that hole and type "ctrl-X ctrl-E".   
+
+#### Ex 4.3.c
+
+Unfortunately, this question is almost impossible to solve without a little background. First we should mention the following theorem:
+
+**Theorem (Glivenko 1929)** If `P` is a proposition provable in classical propositional logic (a _classical tautology_) then `¬ ¬ P` is is provable in intuitionistic propositional logic (an _intuitionistic tautology_).
+
+It's proof reveals the following methodology for proving `¬ ¬ P` in our dependent type theory (which is necessarily intuitionistic) when `P` is known to be a classical tautology.
+
+1. To prove `¬ ¬ P` by ¬-introduction we must assume `¬ P` and use that assumption to prove `∅` (bottom), name this assumption `np`.
+
+2. Pick a sub-expression `Q` of `P`, either by just picking one at random or because you have some intuition that this particular sub-expression will be useful in the next step. In many cases you can probably pick `Q` to be one of the assumed propositional variables or its negation (if that is present in `P`).
+
+3. Attempt to prove `P` from an assumption `q : Q`, if this succeeds (it most likely will) move to the next step but if it doesn't go back to 2 and pick a new sub-expression.
+
+4. So we have now proved `P` (from the assumption `q : Q`) but in 1 we adopted the assumption `np : ¬ P` so we can use negation elimination (`¬-elim : ¬ P → P → ∅`) to provide a proof of `∅`.
+
+5. Now apply ¬-introduction to discharge the assumption `q : Q` and obtain a proof of `¬ Q` (still under our undischarged assumption of `np : P`). 
+
+6. Finally try to use our concrete proof of `¬ Q` to again prove `P`, if this succeeds apply ¬-elimination with our assumption `np : ¬ P` to prove `∅` as required, if it doesn't again go back to 2 and try again.
+
+This seems like steps 3 and 6 might lead us to trying a lot of different possibilities for Q, but in general we rarely have to backtrack in this way. Notice that in this algorithm we use the assumption `np : ¬ P` _twice_, the first time in proving `¬ Q` (step 5) and the second on proving the ultimate goal `∅` (step 6).
+
+To see how this works out in practice, lets prove the double negation of the classical tautology _excluded middle_ `A + ¬ A`.
+
+```agda
+¬¬-excl-middle : {i : Level}{A : UU i} → ¬ ¬ (A + ¬ A)
+¬¬-excl-middle {A = A} np = np step5  -- Use our proof of A + ¬ A from step 5 below and
+                                      -- our assumption np : ¬ (A + ¬ A) to provide a 
+                                      -- term (proof) of ∅ using ¬-elimination - which is
+                                      -- just application of the function 
+                                      -- np : (A + ¬ A) → ∅` to the value step5.  
+    where
+        -- Notice that the parameter np has type ¬ (A + ¬ A), it is the assumption
+        -- introduced in 1.
+
+        -- take A to be our guessed sub-expression Q of P = A + ¬ A in step 2 and 
+        --- prove P under the assumption a : A as in step 3
+        step3 : A → (A + ¬ A)
+        step3 = inl              -- easy
+
+        -- Now we can prove ¬ A as in step 4, by ¬-introduction we must define a function
+        -- A → ∅ which we can do by assuming a : A a parameter and returning the value
+        -- and then obtaining a proof of ∅ by applying ¬-introduction to np : ¬ (A + ¬A)
+        -- and (step3 a) : A + ¬ A, in other words simply apply the function np to the term
+        -- (step3 a).
+        step4 : ¬ A 
+        step4 a = np (step3 a) 
+
+        -- But now it is clear how to prove P from the concrete proof of `¬ A` in step 4.
+        step5 : A + ¬ A 
+        step5 = inr step4
+```
+
+I've written this out in great detail to illustrate Glivenko's algorithm at work. Notice that in this proof we use the assumption `np : ¬ (A + ¬ A)` _twice_, the first time to construct our proof of `¬ A` and the second in proving our ultimate goal. 
+
+**Note:** In order to use the type variable `A` in the expressions in the `where` clause above we need to _bind_ it in the the line 2 of the definition, just below the type signature of `¬¬-excl-middle`. However, since `A` is an implicit parameter we do that using the peculiar pattern `{A = A}` as discussed above. 
+
+We could, of course, condense things down as follows... 
+
+* substitute the expression for `step3` into the body of `step4`, then 
+* express `step4` as a lambda expression and substitute that into the body of `step5`, and 
+* finally substitute that term into the expression to the right of the defining equality in line 2 (just below the type signature of `¬¬-excl-middle`) 
+
+...giving the much more concise answer.
+
+```agda
+¬¬-excl-middle' : {i : Level}{A : UU i} → ¬ ¬ (A + ¬ A)
+¬¬-excl-middle' np = np (inr λ a → np (inl a))
+```
+
+Now, have a go at this yourself and prove that the following double negation of classical laws hold.
+
+```agda
+¬¬-dn-elimination : {i : Level}{A : UU i} → ¬ ¬ (¬ ¬ A → A)
+¬¬-dn-elimination np = {!   !}
+
+¬¬-pierce : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ (((A → B) → A) → A)
+¬¬-pierce np = {!   !}
+
+¬¬-dummett : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ ((A → B) + (B → A))
+¬¬-dummett np = {!   !}
+```
