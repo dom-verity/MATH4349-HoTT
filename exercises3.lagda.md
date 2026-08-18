@@ -495,4 +495,28 @@ Now, have a go at this yourself and prove that the following double negation of 
 
 To check that the propositions we've doubly negated here are indeed classical tautologies you might write out their truth tables.
 
-**Comment:** The _Dummett axiom_, in other words the classical tautology `(A → B) + (B → A)` is a little weird. It says that for any two propositions `A` and `B` either `A` implies `B` or `B` implies `A`. So by letting `A` = "the sky is blue" and `B` = `my window is broken` then Dummett may be read as saying that either "the sky is blue so my window is broken" or "my window is broken so the sky is blue". This seems absurd to us, because we interpret implication as meaning that there is some teleological (possibly causal) connection between the antecedent and consequent of an implication. Logics such as [_Linear logic_](https://en.wikipedia.org/wiki/Linear_logic), [_Relevance logic_](https://en.wikipedia.org/wiki/Relevance_logic) and [_Intuitionistic logic_](https://en.wikipedia.org/wiki/Intuitionistic_propositional_logic) are all, in part, designed to ensure that implications are _material_ in the sense that they do encapsulate a teleological connection between propositions.
+**Comment:** The _Dummett axiom_, in other words the classical tautology `(A → B) + (B → A)` is a little weird. It says that for any two propositions `A` and `B` either `A` implies `B` or `B` implies `A`. So by letting `A` = "the sky is blue" and `B` = "my window is broken" then Dummett may be read as saying that either "the sky is blue so my window is broken" or "my window is broken so the sky is blue". This seems absurd to us, because we interpret implication as meaning that there is some teleological (possibly causal) connection between the antecedent and consequent of an implication. Logics such as [_Linear logic_](https://en.wikipedia.org/wiki/Linear_logic), [_Relevance logic_](https://en.wikipedia.org/wiki/Relevance_logic) and [_Intuitionistic logic_](https://en.wikipedia.org/wiki/Intuitionistic_propositional_logic) are all, in part, designed to ensure that implications are _material_ in the sense that they do encapsulate a teleological connection between propositions.
+
+This is the kind of issue that keeps Philosophers up at night - but maybe Mathematicians don't care about such things.
+
+#### Ex 4.3.d
+
+Show that.
+
+```agda
+excl-middle-implies-¬¬-elim : {i : Level} {P : UU i} → (P + ¬ P) → (¬ ¬ P → P)
+excl-middle-implies-¬¬-elim emP nnP = {!   !}
+
+funny-lemma : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (Q → P) → ((P + ¬ P) → (Q → P))
+funny-lemma nnQP emP q = {!   !}
+
+funny-lemma' : {i j : Level}{P : UU i}{Q : UU j} → ((P + ¬ P) → (Q → P)) → ¬ ¬ (Q → P) 
+funny-lemma' f nQP = {!   !}
+```
+
+These should be a little more straightforward now.
+
+#### Exercise 4.3.e 
+
+
+
