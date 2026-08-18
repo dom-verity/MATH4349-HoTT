@@ -395,6 +395,21 @@ Construct maps of the following types, which are all part of a thing called the 
 
 **Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole, move to that hole and type "ctrl-X ctrl-E".   
 
+For my money, I think this list of functions leaves out one that I would have included. The following function endows the double negation operator with the structure of an _applicative (or strong) functor_.
+
+```agda
+¬¬-app-fun : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (P → Q) → ¬ ¬ P → ¬ ¬ Q
+¬¬-app-fun dnPQ dnP nQ = dnPQ (λ f → {!  !})
+```
+
+I've started a proof of this result in order to illustrate a couple of thoughts that might be helpful later on:
+
+1. Notice that I've introduced three parameters on the left: `dnPQ : ¬ ¬ (P → Q)` a proof of the double negation of the function type (implication) `P → Q`,  `dnP` a proof of the double negation of `P`, and `nQ` a proof of the negation of `Q`. So our goal is now to use those to build a proof of `∅`. Ultimately in very many of the examples in this question, we will introduce as many parameters as necessary to reduce the type of the goal to `∅`.
+
+2. Somehow we would like to "apply" `dnPQ` to `dnP` but we can't do that because their types are all wrong. We can, however, _"unwrap"_ a function `f : P → Q` from `dnPQ` and an element of `p : P` from `dnP` by applying them to functions (lambda expressions) whose parameters are `f` and `p` respectively and which return a value of type `∅`. I've illustrated the first of those steps in the partial definition above. 
+
+Now its your turn, in the hole I've left in the last definition apply `dnP` to a lambda expression to also unwrap a `p : P` from `dnP`. Now in the environment of the resulting hole you will have variables `p : P`, `f : P → Q` and `nQ : ¬ Q = Q → ∅`, from these we can certainly make a term of type `∅` and hence, by application of the ex-falso rule, a term of any required type. 
+
 #### Ex 4.3.c
 
 Unfortunately, this question is almost impossible to solve without a little background. First we should mention the following theorem:
