@@ -408,7 +408,7 @@ I've started a proof of this result in order to illustrate a couple of thoughts 
 
 2. Somehow we would like to "apply" `dnPQ` to `dnP` but we can't do that because their types are all wrong. We can, however, _"unwrap"_ a function `f : P → Q` from `dnPQ` and an element of `p : P` from `dnP` by applying them to functions (lambda expressions) whose parameters are `f` and `p` respectively and which return a value of type `∅`. I've illustrated the first of those steps in the partial definition above. 
 
-Now its your turn, in the hole I've left in the last definition apply `dnP` to a lambda expression to also unwrap a `p : P` from `dnP`. Now in the environment of the resulting hole you will have variables `p : P`, `f : P → Q` and `nQ : ¬ Q = Q → ∅`, from these we can certainly make a term of type `∅` and hence, by application of the ex-falso rule, a term of any required type. 
+Now its your turn, in the hole I've left in the last definition apply `dnP` to a lambda expression to also unwrap a `p : P` from `dnP`. Then in the environment of the resulting hole you will have variables `p : P`, `f : P → Q` and `nQ : ¬ Q = Q → ∅`, from these we can certainly make a term of type `∅` and hence, by application of the `ex-falso` rule, a term of any required type. 
 
 #### Ex 4.3.c
 
@@ -484,11 +484,15 @@ Now, have a go at this yourself and prove that the following double negation of 
 
 ```agda
 ¬¬-dn-elimination : {i : Level}{A : UU i} → ¬ ¬ (¬ ¬ A → A)
-¬¬-dn-elimination np = {!   !}
+¬¬-dn-elimination {A = A} np = {!   !}
 
 ¬¬-pierce : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ (((A → B) → A) → A)
-¬¬-pierce np = {!   !}
+¬¬-pierce {A = A} {B = B} np = {!   !}
 
 ¬¬-dummett : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ ((A → B) + (B → A))
-¬¬-dummett np = {!   !}
+¬¬-dummett {A = A} {B = B} np = {!   !}
 ```
+
+To check that the propositions we've doubly negated here are indeed classical tautologies you might write out their truth tables.
+
+**Comment:** The _Dummett axiom_, in other words the classical tautology `(A → B) + (B → A)` is a little weird. It says that for any two propositions `A` and `B` either `A` implies `B` or `B` implies `A`. So by letting `A` = "the sky is blue" and `B` = `my window is broken` then Dummett may be read as saying that either "the sky is blue so my window is broken" or "my window is broken so the sky is blue". This seems absurd to us, because we interpret implication as meaning that there is some teleological (possibly causal) connection between the antecedent and consequent of an implication. Logics such as [_Linear logic_](https://en.wikipedia.org/wiki/Linear_logic), [_Relevance logic_](https://en.wikipedia.org/wiki/Relevance_logic) and [_Intuitionistic logic_](https://en.wikipedia.org/wiki/Intuitionistic_propositional_logic) are all, in part, designed to ensure that implications are _material_ in the sense that they do encapsulate a teleological connection between propositions.
