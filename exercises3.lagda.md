@@ -518,5 +518,16 @@ These should be a little more straightforward now.
 
 #### Exercise 4.3.e 
 
+Prove that the propositions `¬ P`, `P → ¬ ¬ Q`, and `¬ ¬ P × ¬ ¬ Q` are **double negation stable** in the sense that they are provable from their double negations.
 
+```agda
+¬P-¬¬-stable : {i : Level}{P : UU i} → ¬ ¬ ¬ P → ¬ P
+¬P-¬¬-stable = {!   !}
+
+P→¬¬Q-¬¬-stable : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (P → ¬ ¬ Q) → (P → ¬ ¬ Q)
+P→¬¬Q-¬¬-stable = {!   !}
+
+¬¬P×¬¬Q-¬¬-stable : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (¬ ¬ P × ¬ ¬ Q) → (¬ ¬ P × ¬ ¬ Q)
+¬¬P×¬¬Q-¬¬-stable = {!   !}
+```
 
