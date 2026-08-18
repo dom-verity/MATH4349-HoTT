@@ -531,3 +531,53 @@ P→¬¬Q-¬¬-stable = {!   !}
 ¬¬P×¬¬Q-¬¬-stable = {!   !}
 ```
 
+#### Exercise 4.3.f
+
+With any luck we're getting the idea of expressing these results as Agda types. So this time write each of the following propositions as Agda type signatures and then provide a corresponding proof of that result.
+
+* `¬ ¬ (P × Q) ↔ (¬ ¬ P) × (¬ ¬ Q)`
+* `¬ ¬ (P + Q) ↔ ¬ (¬ P × ¬ Q)`
+* `¬ ¬ (P → Q) ↔ (¬ ¬ P → ¬ ¬ Q)`
+
+**Hint:** I tend to split each of these up into two separate functions which establish each separate direction of the bi-implication.
+
+### Exercise 4.4
+
+I'll get you started by providing the data type declaration for lists and the type signature of their induction rule and leave the rest to you.
+
+```agda
+data list {i : Level} (A : UU i) : UU i where
+    nil : list A
+    cons : A → list A → list A
+```
+
+Following the pattern discussed in section 4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we see that given a type family `B : list A → UU j` the induction rule for the `list` type constructs a dependent function `ind-list : (ls : list A) → B ls` from data comprising an element `b : B nil` (base case) and a dependent function `f : {a : A} → {ls : list A} → B ls → B (cons a la)` (induction step).
+
+```agda
+ind-list : {i j : Level}{A : UU i}{B : list A → UU j} → B nil → 
+           ((a : A) → (as : list A) → B as → B (cons a as)) →
+           (ls : list A) → B ls 
+ind-list b f nil = b
+ind-list b f (cons l ls) = f l ls (ind-list b f ls)
+```
+
+**Note:** a generic element of `list A` is expression of the form
+
+> `cons a₁ (cons a₂ (cons a₃ ... (cons aₙ nil) ... ))`
+
+which represents the ordered list `[a₁, a₂, a₃, ..., aₙ]` of elements of `A`. The induction function takes two parameters `a` and `f` whose types are dependent dopplegangers of the types of `nil` and `cons` in which the type `list A` has been replaced by dependent instances of the type family `B`. When `ind-list b f` is applied to the list above it essentially replaces the terminating instance of `nil` by the element `b` and each instance of `cons` by `f` and then evaluates the resulting expression `f a₁ (f a₂ (f a₃ ... (f aₙ b) ... ))`. This intuition is probably more apparent in the type signature and definition of the following _non-dependent_ version of this induction principle.
+
+```agda
+ind-list-nd : {i j : Level}{A : UU i}{B : UU j} → B → (A → B → B) → list A → B 
+ind-list-nd b f nil = b
+ind-list-nd b f (cons a as) = f a (ind-list-nd b f as)
+```
+
+Now write the Agda type signatures for the functions described in question 4.4 of [Rijke](https://arxiv.org/abs/2212.11082) and provide their definitions. The most challenging of these examples is 
+
+```agda
+reverse-list : {i : Level}{A : UU i} → list A → list A
+reverse-list as = ?
+```
+
+which is intende to reverse the order of the elements in a list. We will discuss a few ways of implementing this, some more efficient than others, in class.
