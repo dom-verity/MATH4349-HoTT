@@ -6,7 +6,7 @@ First we specify the command line options that should be supplied to the Agda co
 
 In the following code we've set the following options:
 * `--without-K` disables Streicher’s K axiom, which we don’t want for univalent mathematics. We'll explain why later.
-* `--exact-split` makes Agda to only accept definitions with the equality sign “=” that behave like so-called judgemental or definitional equalities.
+* `--exact-split` makes Agda to only accept definitions with the equality sign “=” that behaves like so-called judgemental or definitional equalities.
 * `--safe` disables features that may make Agda inconsistent, such as `--type-in-type`, postulates and more.
 
 ```agda
@@ -18,7 +18,7 @@ In the following code we've set the following options:
 Every module file must start with a `module` stanza.
 
 ```agda
-module exercises3 where
+module exercises4 where
 ```
 
 **Note:** the `module-name` must match the base of the file name `module-name.lagda.md`. The extension `.lagda.md` tells Agda that this is a **literate file** written in the markup language [Markdown](https://markdown.org). The contents of the file itself is intended to be a human readable document, with Agda code interspersed throughout and enclosed **fenced code blocks**. These start with \`\`\` or \`\`\`agda on its own line, and end with \`\`\`, also on its own line
@@ -307,277 +307,225 @@ ind-Σ f (pair a b) = f a b
 
 **Note:** This function is sometimes called **un-currying** in honour of [_Haskell Curry_](https://en.wikipedia.org/wiki/Haskell_Curry), it is inverse to the [_currying_](https://en.wikipedia.org/wiki/Currying) operation. Actually the idea of representing two parameter functions as functions that take a single parameter and return a function with a single parameter is originally due to [_Gottlob Frege_](https://en.wikipedia.org/wiki/Gottlob_Frege) and was developed in its modern form by [_Moses Schönfinkel_](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel).
 
-## Exercises
+## Identity type ([Rijke](https://arxiv.org/abs/2212.11082) chapter 5)
 
-The following are largely the exercises from chapter 4 of [Rijke](https://arxiv.org/abs/2212.11082) converted into a form that Agda will understand.
-
-### Exercise 4.1 (a)
-
-Define the predecessor function on `ℤ`.
+This is really where things get interesting. If propositions are types then the equality proposition, which we are familiar with from first order logic, must also ben implemented as a type. In Martin-Löf type theory this is called the _identity type_, in Agda it is usually implemented using the following `data` declaration.  
 
 ```agda
-pred-ℤ : ℤ → ℤ
-pred-ℤ z = {!   !}
+data Id {i : Level}{A : UU i}(a : A) : A → UU i where
+    refl : Id a a
 ```
 
-### Exercise 4.1 (b)
+You can read the first line of this, the type signature, as stating the formation rule for the `Id` type:
 
-Define the additive group operations on `ℤ`.
+```math
+\dfrac{\Gamma \vdash a : A}{\Gamma, x : A \vdash \text{Id}_A(a, x) \,\text{type}} \;\; \text{Id-form}
+```
+
+Of course, in this rule we have not worried about which type _universe_ the types `A` and `Id(A,a,x)` live in, but we have done so in the Agda code. Specifically it states that `A` is in the universe `UU i` for some arbitrary universe level `i` and that the corresponding identity type is a family of types in the _same_ universe.
+
+Now you can read the second line, which defines the sole data constructor of the type `Id`, as specifying the sole introduction rule for this type:
+
+```math
+\dfrac{\Gamma \vdash a : A}{\Gamma \vdash \text{refl}_A(a) : \text{Id}(a, a)}
+```
+
+**Note:** Rijke uses the term **identifications** for the elements of `Id a x`, because they witness the various ways of demonstrating that `a` is identified with `x`. We shall also use the term **path** for these elements, which is common usage in the Homotopy Type Theory literature. 
+
+### Path induction
+
+The induction rule for `Id` is often referred to as **path induction** and it takes the following form in Agda.
 
 ```agda
-add-ℤ : ℤ → ℤ → ℤ
-add-ℤ z = {!   !}
-
-neg-ℤ : ℤ → ℤ
-neg-ℤ z = {!   !}
+ind-Id : {i j : Level}{A : UU i}{a : A}{B : (x : A) → Id a x → UU j} → (b : B a refl) → 
+         (x : A) → (p : Id a x) → B x p
+ind-Id b _ refl = b
 ```
 
-### Exercise 4.2
+As a rule in "pen and paper" type theory this rule is displayed in the equivalent form:
 
-Define the type `bool :: UU lzero` of _booleans_, which contains two generic elements `true :: bool` and `false :: bool`, using a algebraic `data` type declaration in Agda. Now define the following functions
+```math
+\dfrac{\Gamma\vdash a : A \hspace{2em} \Gamma, x : A, p : Id(a, x) ⊢ B(x, p)\,\text{type} \;\;}{\Gamma\vdash \text{ind-Id}_a : B(a, refl_a) → \Pi_{x : A} \Pi_{p : \text{Id}(a,x)} B x p}
+```
 
-* The **boolean negation** function `¬-bool : bool → bool`,
-* The **boolean conjunction** function `_∧_ : bool → bool → bool`, and
-* The **boolean disjunction** function `_∨_ : bool → bool → bool`.
-* The **boolean implication** function `_⇒_ : bool → bool → bool` (**hint:** this can be defined in terms of the booleans negation and disjunction functions).
+### The "[_Groupoid_](https://en.wikipedia.org/wiki/Groupoid)" structure of types ([Rijke](https://arxiv.org/abs/2212.11082) section 5.2)
 
-### Exercise 4.3
+We tend to think of types `A` as being _spaces_ and of `Id a x` as being the space of paths in `A` from the point `a : A` to the point `x : A`.
 
-**Note:** These exercises involve (double) negation and so they can be expected to be a little tricky. That said, if you did the double negation exercises in `exercises2.lagda.md` many of these will be familiar.
+#### Path concatenation ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.2.1)
 
-For types `P` and `Q` we shall write `P ↔ Q` for the **bi-implication** which is defined to be the product type `(P → Q) × (Q → P)`. Note here that the bi-implication operator `↔` can be entered by typing the key sequence `\\lr`.
+We define both the concatenation function and an infix operator synonym `·`, here this _centre dot_ symbol is typed using the key sequence "\\cdot". 
 
 ```agda
-infixr 0 _↔_
+concat : {i : Level}{A : UU i}{a b c : A} → Id a b → Id b c → Id a c
+concat refl q = q
 
-_↔_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
-A ↔ B = (A → B) × (B → A)
+infixr 20 _·_
+_·_ = concat
 ```
 
-#### Ex 4.3.a
-
-Show that:
-1. `¬ (P × ¬ P)`
-2. `¬ (P ↔ ¬ P)`
-
-**Note:** in other words your task is to construct a term that inhabits each of these types.
+Now we can prove that `refl : Id a a` is a unit for this concatenation operation ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.2.4):
 
 ```agda
-non-contradiction : {i : Level}{P : UU i} → ¬ (P × ¬ P)
-non-contradiction p = {!   !}
+left-unit : {i : Level}{A : UU i}{a b : A}{p : Id a b} → Id (refl · p) p 
+left-unit {p = refl} = refl
 
-not-P-iff-not-P : {i : Level}{P : UU i} → ¬ (P ↔ ¬ P)
-not-P-iff-not-P p = {!   !}
+right-unit : {i : Level}{A : UU i}{a b : A}{p : Id a b} → Id (p · refl) p 
+right-unit {p = refl} = refl
 ```
 
-**Note:** By definition `¬ (P × ¬ P)` and `¬ (P ↔ ¬ P)` are function types with output type `∅` and input types `P × ¬ P` and `P ↔ ¬ P` respectively. Consequently, the type of the parameter `p` I've given in these definitions is `P × ¬ P` in the first and `P ↔ ¬ P` in the second. You can see this for yourself by loading this file into Agda in Visual Studio Code, moving to each hole on the right hand side above in turn, and typing "ctrl-X ctrl-E" to show the _environment_ of variables that are in scope in that hole.
-
-**Hint:** In 2. case split on the parameter `p` which unfolds it into two functions `f : P → ¬ P` and `g : ¬ P → P`, but by definition `¬ P = P → ∅` so the type of `f` expands to `f : P → P → ∅`. So use `f` to construct a term of type `¬ P` and then use that and `g` to also construct a term of type `P`. From here its a downhill run.
-
-#### Ex 4.3.b
-
-Construct maps of the following types, which are all part of a thing called the **double negation monad**.
-
-1. `P → ¬ ¬ P` double negation introduction.
-2. `(P → Q) ­→ (¬ ¬ P → ¬ ¬ Q)` the functoriality of double negation.
-3. `(P → ¬ ¬ Q) → (¬ ¬ P → ¬ ¬ Q)` Kleisli extension.
+#### Path inverse or reversal ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.2.2)
 
 ```agda
-¬¬-intro : {i : Level}{P : UU i} → P → ¬ ¬ P 
-¬¬-intro = {!   !}
-
-¬¬-func : {i j : Level}{P : UU i}{Q : UU j} → (P → Q) → (¬ ¬ P → ¬ ¬ Q)
-¬¬-func = {!   !}
-
-¬¬-kleisli : {i j : Level}{P : UU i}{Q : UU j} → (P → ¬ ¬ Q) → (¬ ¬ P → ¬ ¬ Q)
-¬¬-kleisli = {!   !}
+inv : {i : Level}{A : UU i}{a b : A} → Id a b → Id b a 
+inv refl = refl
 ```
 
-**Hint:** These types are nested function types so start by introducing enough parameters on the left to reduce the type of the output type to `∅`, now combine the parameters to form a term of that type. Again to see what variables are available in the environment of each hole, move to that hole and type "ctrl-X ctrl-E".   
-
-For my money, I think this list of functions leaves out one that I would have included. The following function endows the double negation operator with the structure of an _applicative (or strong) functor_.
+The reversed path `inv p` is both left and right inverse to `p` under the concatenation operation ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.2.5).
 
 ```agda
-¬¬-app-fun : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (P → Q) → ¬ ¬ P → ¬ ¬ Q
-¬¬-app-fun dnPQ dnP nQ = dnPQ (λ f → {!  !})
+left-inv : {i : Level}{A : UU i}{a b : A}{p : Id a b} → Id (inv p · p) refl
+left-inv {p = refl} = refl
+
+right-inv : {i : Level}{A : UU i}{a b : A}{p : Id a b} → Id (p · inv p) refl
+right-inv {p = refl} = refl
 ```
 
-I've started a proof of this result in order to illustrate a couple of thoughts that might be helpful later on:
-
-1. Notice that I've introduced three parameters on the left: `dnPQ : ¬ ¬ (P → Q)` a proof of the double negation of the function type (implication) `P → Q`,  `dnP` a proof of the double negation of `P`, and `nQ` a proof of the negation of `Q`. So our goal is now to use those to build a proof of `∅`. Ultimately in very many of the examples in this question, we will introduce as many parameters as necessary to reduce the type of the goal to `∅`.
-
-2. Somehow we would like to "apply" `dnPQ` to `dnP` but we can't do that because their types are all wrong. We can, however, _"unwrap"_ a function `f : P → Q` from `dnPQ` and an element of `p : P` from `dnP` by applying them to functions (lambda expressions) whose parameters are `f` and `p` respectively and which return a value of type `∅`. I've illustrated the first of those steps in the partial definition above. 
-
-Now its your turn, in the hole I've left in the last definition apply `dnP` to a lambda expression to also unwrap a `p : P` from `dnP`. Then in the environment of the resulting hole you will have variables `p : P`, `f : P → Q` and `nQ : ¬ Q = Q → ∅`, from these we can certainly make a term of type `∅` and hence, by application of the `ex-falso` rule, a term of any required type. 
-
-#### Ex 4.3.c
-
-Unfortunately, this question is almost impossible to solve without a little background. First we should mention the following theorem:
-
-**Theorem (Glivenko 1929)** If `P` is a proposition provable in classical propositional logic (a _classical tautology_) then `¬ ¬ P` is is provable in intuitionistic propositional logic (an _intuitionistic tautology_).
-
-It's proof reveals the following methodology for proving `¬ ¬ P` in our dependent type theory (which is necessarily intuitionistic) when `P` is known to be a classical tautology.
-
-1. To prove `¬ ¬ P` by ¬-introduction we must assume `¬ P` and use that assumption to prove `∅` (bottom), name this assumption `np`.
-
-2. Pick a sub-expression `Q` of `P`, either by just picking one at random or because you have some intuition that this particular sub-expression will be useful in the next step. In many cases you can probably pick `Q` to be one of the assumed propositional variables or its negation (if that is present in `P`).
-
-3. Attempt to prove `P` from an assumption `q : Q`, if this succeeds (it most likely will) move to the next step but if it doesn't go back to 2 and pick a new sub-expression.
-
-4. So we have now proved `P` (from the assumption `q : Q`) but in 1 we adopted the assumption `np : ¬ P` so we can use negation elimination (`¬-elim : ¬ P → P → ∅`) to provide a proof of `∅`.
-
-5. Now apply ¬-introduction to discharge the assumption `q : Q` and obtain a proof of `¬ Q` (still under our undischarged assumption of `np : P`). 
-
-6. Finally try to use our concrete proof of `¬ Q` to again prove `P`, if this succeeds apply ¬-elimination with our assumption `np : ¬ P` to prove `∅` as required, if it doesn't again go back to 2 and try again.
-
-This seems like steps 3 and 6 might lead us to trying a lot of different possibilities for Q, but in general we rarely have to backtrack in this way. Notice that in this algorithm we use the assumption `np : ¬ P` _twice_, the first time in proving `¬ Q` (step 5) and the second on proving the ultimate goal `∅` (step 6).
-
-To see how this works out in practice, lets prove the double negation of the classical tautology _excluded middle_ `A + ¬ A`.
+#### Associativity of path concatenation ([Rijke](https://arxiv.org/abs/2212.11082) section 5.2.3)
 
 ```agda
-¬¬-excl-middle : {i : Level}{A : UU i} → ¬ ¬ (A + ¬ A)
-¬¬-excl-middle {A = A} np = np step5  -- Use our proof of A + ¬ A from step 5 below and
-                                      -- our assumption np : ¬ (A + ¬ A) to provide a 
-                                      -- term (proof) of ∅ using ¬-elimination - which is
-                                      -- just application of the function 
-                                      -- np : (A + ¬ A) → ∅` to the value step5.  
-    where
-        -- Notice that the parameter np has type ¬ (A + ¬ A), it is the assumption
-        -- introduced in 1.
-
-        -- take A to be our guessed sub-expression Q of P = A + ¬ A in step 2 and 
-        --- prove P under the assumption a : A as in step 3
-        step3 : A → (A + ¬ A)
-        step3 = inl              -- easy
-
-        -- Now we can prove ¬ A as in step 4, by ¬-introduction we must define a function
-        -- A → ∅ which we can do by assuming a : A a parameter and returning the value
-        -- and then obtaining a proof of ∅ by applying ¬-introduction to np : ¬ (A + ¬A)
-        -- and (step3 a) : A + ¬ A, in other words simply apply the function np to the term
-        -- (step3 a).
-        step4 : ¬ A 
-        step4 a = np (step3 a) 
-
-        -- But now it is clear how to prove P from the concrete proof of `¬ A` in step 4.
-        step5 : A + ¬ A 
-        step5 = inr step4
+assoc : {i : Level}{A : UU i}{a b c d : A}{p : Id a b}{q : Id b c}{r : Id c d} → 
+        Id ((p · q) · r) (p · (q · r))
+assoc {p = refl} = refl
 ```
 
-I've written this out in great detail to illustrate Glivenko's algorithm at work. Notice that in this proof we use the assumption `np : ¬ (A + ¬ A)` _twice_, the first time to construct our proof of `¬ A` and the second in proving our ultimate goal. 
-
-**Note:** In order to use the type variable `A` in the expressions in the `where` clause above we need to _bind_ it in the the line 2 of the definition, just below the type signature of `¬¬-excl-middle`. However, since `A` is an implicit parameter we do that using the peculiar pattern `{A = A}` as discussed above. 
-
-We could, of course, condense things down as follows... 
-
-* substitute the expression for `step3` into the body of `step4`, then 
-* express `step4` as a lambda expression and substitute that into the body of `step5`, and 
-* finally substitute that term into the expression to the right of the defining equality in line 2 (just below the type signature of `¬¬-excl-middle`) 
-
-...giving the much more concise answer.
+#### Functions act on paths ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.3.1)
 
 ```agda
-¬¬-excl-middle' : {i : Level}{A : UU i} → ¬ ¬ (A + ¬ A)
-¬¬-excl-middle' np = np (inr λ a → np (inl a))
+ap : {i j : Level}{A : UU i}{B : UU j}(f : A → B){a a' : A} → Id a a' → Id (f a) (f a')
+ap f refl = refl
 ```
-
-Now, have a go at this yourself and prove that the following double negation of classical laws hold.
 
 ```agda
-¬¬-dn-elimination : {i : Level}{A : UU i} → ¬ ¬ (¬ ¬ A → A)
-¬¬-dn-elimination {A = A} np = {!   !}
+ap-id : {i : Level}{A : UU i}{a a' : A}{p : Id a a'} → Id (ap id p) p
+ap-id {p = refl} = refl
 
-¬¬-pierce : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ (((A → B) → A) → A)
-¬¬-pierce {A = A} {B = B} np = {!   !}
-
-¬¬-dummett : {i j : Level}{A : UU i}{B : UU j} → ¬ ¬ ((A → B) + (B → A))
-¬¬-dummett {A = A} {B = B} np = {!   !}
+ap-comp : {i j k : Level}{A : UU i}{B : UU j}{C : UU k}{a a' : A}{f : A → B}{g : B → C}
+          {p : Id a a'} → Id (ap (g ∘ f) p) (ap g (ap f p))
+ap-comp {p = refl} = refl
 ```
 
-To check that the propositions we've doubly negated here are indeed classical tautologies you might write out their truth tables.
+#### Relating actions on paths to composition and inverses (([Rijke](https://arxiv.org/abs/2212.11082) definition 5.3.2)
 
-**Comment:** The _Dummett axiom_, in other words the classical tautology `(A → B) + (B → A)` is a little weird. It says that for any two propositions `A` and `B` either `A` implies `B` or `B` implies `A`. So by letting `A` = "the sky is blue" and `B` = "my window is broken" then Dummett may be read as saying that either "the sky is blue so my window is broken" or "my window is broken so the sky is blue". This seems absurd to us, because we interpret implication as meaning that there is some teleological (possibly causal) connection between the antecedent and consequent of an implication. Logics such as [_Linear logic_](https://en.wikipedia.org/wiki/Linear_logic), [_Relevance logic_](https://en.wikipedia.org/wiki/Relevance_logic) and [_Intuitionistic logic_](https://en.wikipedia.org/wiki/Intuitionistic_propositional_logic) are all, in part, designed to ensure that implications are _material_ in the sense that they do encapsulate a teleological connection between propositions.
-
-This is the kind of issue that keeps Philosophers up at night - but maybe Mathematicians don't care about such things.
-
-#### Ex 4.3.d
-
-Show that.
+##### Actions on paths preserve `refl`.
 
 ```agda
-excl-middle-implies-¬¬-elim : {i : Level} {P : UU i} → (P + ¬ P) → (¬ ¬ P → P)
-excl-middle-implies-¬¬-elim emP nnP = {!   !}
-
-funny-lemma : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (Q → P) → ((P + ¬ P) → (Q → P))
-funny-lemma nnQP emP q = {!   !}
-
-funny-lemma' : {i j : Level}{P : UU i}{Q : UU j} → ((P + ¬ P) → (Q → P)) → ¬ ¬ (Q → P) 
-funny-lemma' f nQP = {!   !}
+ap-refl : {i j : Level}{A : UU i}{B : UU j}{f : A → B}{a : A} → Id (ap f {a = a} refl) refl
+ap-refl = refl
 ```
 
-These should be a little more straightforward now.
+**Note:** In the definition above we had to help the Agda type checker a little. If we leave out the slightly unexpected implicit parameter binding `{a = a}` on the right we get a peculiar goal `_a_445 : A` showing up in the **All Goals** window, and we see that the use of `ap` in the type signature above is highlighted in yellow. This indicates that when typechecking the `ap` expression the Agda compiler can't work out what value to bind its parameter `a` to. The type checker can infer that the `a` parameters to `ap` and the first `refl` must both be bound to the same element of `_a_445 : A` and that the `a` parameter of the second `refl` must then be bound to `f _a_445 : B`. It can't, however, guess which element of `A` in the current environment to take to be `_a_445`. 
 
-#### Exercise 4.3.e 
+Consequently we must supply that information, and in principle we can do that by adding an explicit binding for the parameter `a` to the instance of `ap` or to either of the instances of `refl`. These parameters are, however, implicit so we must do that using the notation {a = a} to bind the implicit parameter `a` of `ap` (on the left of the `=` sign) to the value `a` in the ambient environment (on its right).
 
-Prove that the propositions `¬ P`, `P → ¬ ¬ Q`, and `¬ ¬ P × ¬ ¬ Q` are **double negation stable** in the sense that they are provable from their double negations.
+##### Actions on paths preserve path inverses.
 
 ```agda
-¬P-¬¬-stable : {i : Level}{P : UU i} → ¬ ¬ ¬ P → ¬ P
-¬P-¬¬-stable = {!   !}
-
-P→¬¬Q-¬¬-stable : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (P → ¬ ¬ Q) → (P → ¬ ¬ Q)
-P→¬¬Q-¬¬-stable = {!   !}
-
-¬¬P×¬¬Q-¬¬-stable : {i j : Level}{P : UU i}{Q : UU j} → ¬ ¬ (¬ ¬ P × ¬ ¬ Q) → (¬ ¬ P × ¬ ¬ Q)
-¬¬P×¬¬Q-¬¬-stable = {!   !}
+ap-inv : {i j : Level}{A : UU i}{B : UU j}{f : A → B}{a a' : A}{p : Id a a'} → Id (ap f (inv p)) (inv (ap f p))
+ap-inv {p = refl} = refl
 ```
 
-#### Exercise 4.3.f
-
-With any luck we're getting the idea of expressing these results as Agda types. So this time write each of the following propositions as Agda type signatures and then provide a corresponding proof of that result.
-
-* `¬ ¬ (P × Q) ↔ (¬ ¬ P) × (¬ ¬ Q)`
-* `¬ ¬ (P + Q) ↔ ¬ (¬ P × ¬ Q)`
-* `¬ ¬ (P → Q) ↔ (¬ ¬ P → ¬ ¬ Q)`
-
-**Hint:** I tend to split each of these up into two separate functions which establish each separate direction of the bi-implication.
-
-### Exercise 4.4
-
-I'll get you started by providing the data type declaration for lists and the type signature of their induction rule and leave the rest to you.
+##### Actions on paths preserve path concatenation.
 
 ```agda
-data list {i : Level} (A : UU i) : UU i where
-    nil : list A
-    cons : A → list A → list A
+ap-concat : {i j : Level}{A : UU i}{B : UU j}{f : A → B}{a a' a'' : A}{p : Id a a'}{q : Id a' a''} → 
+            Id (ap f (p · q))  ((ap f p) · (ap f q))
+ap-concat {p = refl} = refl  
 ```
 
-Following the pattern discussed in section 4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we see that given a type family `B : list A → UU j` the induction rule for the `list` type constructs a dependent function `ind-list : (ls : list A) → B ls` from data comprising an element `b : B nil` (base case) and a dependent function `f : {a : A} → {ls : list A} → B ls → B (cons a la)` (induction step).
+#### Transport of structure ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.4.1)
+
+As a special case of the `Id-ind` induction rule we have the following **transport** function. Given an element `p : Id a b` this transports an element `b : B a` along the path `p` to give an element `tr p b : B a'`.
 
 ```agda
-ind-list : {i j : Level}{A : UU i}{B : list A → UU j} → B nil → 
-           ((a : A) → (as : list A) → B as → B (cons a as)) →
-           (ls : list A) → B ls 
-ind-list b f nil = b
-ind-list b f (cons l ls) = f l ls (ind-list b f ls)
+tr : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A} → Id a a' → B a → B a'
+tr {a' = a'} p b = ind-Id b a' p
 ```
 
-**Note:** a generic element of `list A` is expression of the form
+#### The action of dependent functions on paths (Rijke](https://arxiv.org/abs/2212.11082) definition 5.4.2)
 
-> `cons a₁ (cons a₂ (cons a₃ ... (cons aₙ nil) ... ))`
-
-which represents the ordered list `[a₁, a₂, a₃, ..., aₙ]` of elements of `A`. The induction function takes two parameters `a` and `f` whose types are dependent dopplegangers of the types of `nil` and `cons` in which the type `list A` has been replaced by dependent instances of the type family `B`. When `ind-list b f` is applied to the list above it essentially replaces the terminating instance of `nil` by the element `b` and each instance of `cons` by `f` and then evaluates the resulting expression `f a₁ (f a₂ (f a₃ ... (f aₙ b) ... ))`. This intuition is probably more apparent in the type signature and definition of the following _non-dependent_ version of this induction principle.
+Suppose that `f : (a : A) → B a` is a dependent function, where `B` is a type that depends on the type `A`, then at first blush it doesn't seem to make much sense to apply `f` to a path `p : Id a a'`, since `f a` and `f a'` lie in (possibly) distinct types `B a` and `B a'`. We can, however, use the transport function to give some sense to the application of `f` to paths.
 
 ```agda
-ind-list-nd : {i j : Level}{A : UU i}{B : UU j} → B → (A → B → B) → list A → B 
-ind-list-nd b f nil = b
-ind-list-nd b f (cons a as) = f a (ind-list-nd b f as)
+apd : {i j : Level}{A : UU i}{B : A → UU j}(f : (a : A) → B a){a a' : A} → 
+      (p : Id a a') → Id (tr p (f a)) (f a')
+apd f refl = refl 
 ```
 
-Now write the Agda type signatures for the functions described in question 4.4 of [Rijke](https://arxiv.org/abs/2212.11082) and provide their definitions. The most challenging of these examples is 
+# Exercises
+
+## Exercise 4.1
+
+Prove the following variant of Cantor's theorem:
+
+**Hint:** We can apply Cantor's diagonal argument by defining the function `k = λ m → succ-ℕ (f m m) : ℕ → ℕ` and constructing a proof that it is not equal to `f n` for any `n` by giving a term of type `(n : ℕ) → ¬ (Id k (f n))`.
+
+First a couple of lemmas that you might like to prove and use in your proof. We have that natural numbers and their successors are distinct...
+
+```agda 
+disjoint-succ-ℕ-n-and-n : {n : ℕ} → ¬ (Id (succ-ℕ n) n)
+disjoint-succ-ℕ-n-and-n p = {!   !}
+```
+
+... and that equal functions give equal results when applied to the same input (known
+as pointwise equality).
 
 ```agda
-reverse-list : {i : Level}{A : UU i} → list A → list A
-reverse-list as = ?
+pointwise-equality : {i j : Level}{A : UU i}{B : UU j}{f g : A → B}{a : A} → Id f g → Id (f a) (g a)
+pointwise-equality p = {!   !}
 ```
 
-which is intended to reverse the order of the elements in a list. We will discuss a few ways of implementing this, some more efficient than others, in class.
+Finally Cantor's theorem itself for you to complete.
+
+```agda
+cantor : (f : ℕ → ℕ → ℕ) → Σ g ∈ (ℕ → ℕ) , ((n : ℕ) → ¬ (Id g (f n)))
+cantor f = {!   !}
+```
+
+## Exercise 4.2
+
+Show that the natural numbers `ℕ` has _decidable equality_, in the sense that for all natural numbers `n` and `m` we either have that `Id n m` or we have that `¬ (Id n m)`, that is.
+
+```agda
+decidable-ℕ? : (n m : ℕ) → UU lzero
+decidable-ℕ? n m = (Id n m) + ¬ (Id n m)
+```
+
+Again a couple of useful lemmas.
+
+```agda
+disjoint-zero-ℕ-and-succ-ℕ : {n : ℕ} → ¬ (Id zero-ℕ (succ-ℕ n))
+disjoint-zero-ℕ-and-succ-ℕ p = {!   !}
+
+injective-succ-ℕ : {n m : ℕ} → Id (succ-ℕ n) (succ-ℕ m) → Id n m
+injective-succ-ℕ p = {!   !}
+```
+
+Along with the rule `disjoint-succ-ℕ-n-and-n` these are known as **injectivity** rules for the constructors of `ℕ`. These state that
+
+* Elements constructed by distinct constructors are themselves un-equal, and
+* Any constructor is injective.
+
+I broke my proof into two steps, first prove that if equality between `n` and `m` is decidable then so is equality of their successors.
+
+```agda
+decidable-succ-ℕ : {n m : ℕ} → decidable-ℕ? n m → decidable-ℕ? (succ-ℕ n) (succ-ℕ m)
+decidable-succ-ℕ p = {!   !}
+```
+
+Then use that result in a recursive clause to prove.
+
+``` agda
+decidable-ℕ : (n m : ℕ) → decidable-ℕ? n m
+decidable-ℕ  n m = ?
+```
