@@ -525,7 +525,7 @@ decidable-succ-ℕ p = {!   !}
 
 Then use that result in a recursive clause to prove.
 
-``` agda
+```agda
 decidable-ℕ : (n m : ℕ) → decidable-ℕ? n m
-decidable-ℕ  n m = ?
+decidable-ℕ  n m = {!   !}
 ```
