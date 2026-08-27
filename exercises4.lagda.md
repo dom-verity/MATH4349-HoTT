@@ -189,24 +189,19 @@ In essence, these functions tell is that the empty type is the _unit_ for the su
 
 ## Integers
 
-In section 4.5 of [Rijke](https://arxiv.org/abs/2212.11082) the integers are defined as a sum type as follows.
+In section 4.5 of [Rijke](https://arxiv.org/abs/2212.11082) the integers are defined as a sum type `ℤ = ℕ + (𝟙 + ℕ)`. In Agda it is a little more natural to define this using the equivalent data type definition.
 
 ```agda
-ℤ : UU lzero
-ℤ = ℕ + (𝟙 + ℕ)
+data ℤ : UU lzero where
+    zero-ℤ : ℤ
+    in-pos : ℕ → ℤ
+    in-neg : ℕ → ℤ
+
+pattern one-ℤ = in-pos zero-ℕ
+pattern neg-one-ℤ = in-neg zero-ℕ
 ```
 
-Notice that in this encoding the numbers `0`, `-1` and `1` have the encodings `inr (inl ∗)`, `inl zero-ℕ`, and `inr (inr zero-ℕ)`. I find using these a little confusing so I found it convenient to introduce the following [_Pattern Synonyms_](https://agda.readthedocs.io/en/stable/language/pattern-synonyms.html) for these and for the inclusions of `ℕ` onto the positive and negative integers.
-
-```agda
-pattern zero-ℤ = inr (inl ∗)
-pattern one-ℤ = inr (inr zero-ℕ)
-pattern neg-one-ℤ = inl zero-ℕ
-pattern in-pos n = inr (inr n)
-pattern in-neg n = inl n 
-```
-
-These are, of course, precisely the definitions to be found in definition 5.4.1 of [Rijke](https://arxiv.org/abs/2212.11082). The benefit of using pattern synonyms is for these definitions is that they may now be used both in expressions (on the right hand side of defining equalities in function definitions) and in patterns (on the left hand side of those definitions). My definition of the induction rule for `ℤ` illustrates this point.
+Here we are also using a couple of [_Pattern Synonyms_](https://agda.readthedocs.io/en/stable/language/pattern-synonyms.html) so that we can use the symbols `one-ℤ` and `neg-one-ℤ` to refer to the integers `1` and `-1`. The benefit of using pattern synonyms is for these definitions here is that they may now be used both in expressions (on the right hand side of defining equalities in function definitions) and in patterns (on the left hand side of those definitions). My definition of the induction rule for `ℤ` illustrates this point.
 
 Our induction rule mantra for `ℤ` tells us that, given a type family `A : ℤ → UU i`, the induction functional `ind-ℤ` constructs a dependent function `(z : ℤ) → A z` from data in `A` that is mapped to from the generic elements `zero-ℤ`, `one-ℤ` and `neg-one-ℤ` and the successor functions on the positive and negative integers.
 
@@ -599,7 +594,7 @@ decidable-ℕ  n m = {!   !}
 
 ## Exercise 4.3 ([Rijke](https://arxiv.org/abs/2212.11082) exercise 5.1)
 
-Show the operation of inverting identifications distributes over concatenation.
+Show that the operation of inverting identifications distributes over concatenation.
 
 ```agda
 inv-distributes-over-concat : {i : Level}{A : UU i}{a a' a'' : A}{p : Id a a'}{q : Id a' a''} →
