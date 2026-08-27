@@ -607,3 +607,16 @@ inv-distributes-over-concat : {i : Level}{A : UU i}{a a' a'' : A}{p : Id a a'}{q
 inv-distributes-over-concat = {!   !}
 ```
 
+## Exercise 4.4 ([Rijke](https://arxiv.org/abs/2212.11082) exercise 5.2)
+
+For paths `p : Id x y`, `q : Id y z` and `r : Id x z` construct maps `inv-con : Id (p · q) r → Id q ((inv p) · r)` and `con-inv : Id (p · q) r → Id p (r · (inv q))`.
+
+```agda
+inv-con : {i : Level}{A : UU i}{x y z : A}{p : Id x y}{q : Id y z}{r : Id x z} → 
+          Id (p · q) r → Id q ((inv p) · r)
+inv-con s = {!   !}
+
+con-inv : {i : Level}{A : UU i}{x y z : A}{p : Id x y}{q : Id y z}{r : Id x z} → 
+          Id (p · q) r → Id p (r · (inv q))
+con-inv s = {!   !}
+```
