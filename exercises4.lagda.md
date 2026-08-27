@@ -626,10 +626,56 @@ lift : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A} → (b : B a) → (p : 
 lift b p = {!   !}
 ```
 
-Also prove the following theorem, which shows that the path `lift b p` is indeed a lift of `p`, in the sense that when we apply the projection `pr₁ : Σ x ∈ A , B x → A` to the path `lift p b` we get a path which is equal to `p`.
+Also prove the following theorem, which shows that the path `lift b p` is indeed a lift of `p`, in the sense that when we apply the projection `pr₁ : Σ x ∈ A , B x → A` to `lift p b` we get back a path which is equal to `p`.
 
 ```agda
 lift-lifts : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A}{b : B a}{p : Id a a'} → 
              Id (ap pr₁ (lift {B = B} b p)) p
 lift-lifts = {!   !}
+```
+
+## Exercise 4.6 ([Rijke](https://arxiv.org/abs/2212.11082) exercise 5.5)
+
+Show that the natural numbers is a semi-ring. In other words, its addition and multiplication satisfy all of the laws of a ring _except_ that addition does not admit negatives.
+
+First, of course, we must define multiplication.
+
+```agda
+mul-ℕ : ℕ → ℕ → ℕ
+mul-ℕ zero-ℕ m = zero-ℕ
+mul-ℕ (succ-ℕ n) m = add-ℕ (mul-ℕ n m) m
+```
+
+### Part (a)
+
+Show that multiplication satisfies the following laws:
+
+```agda
+left-zero-law-mul-ℕ : {n : ℕ} → Id (mul-ℕ zero-ℕ n) zero-ℕ
+left-zero-law-mul-ℕ = {!   !}
+
+right-zero-law-mul-ℕ : {n : ℕ} → Id (mul-ℕ n zero-ℕ) zero-ℕ
+right-zero-law-mul-ℕ = {!   !}
+
+left-unit-law-mul-ℕ : {n : ℕ} → Id (mul-ℕ (succ-ℕ zero-ℕ) n) n
+left-unit-law-mul-ℕ = {!   !}
+
+right-unit-law-mul-ℕ : {n : ℕ} → Id (mul-ℕ n (succ-ℕ zero-ℕ)) n
+right-unit-law-mul-ℕ = {!   !}
+
+left-successor-law-mul-ℕ : {n m : ℕ} → Id (mul-ℕ (succ-ℕ n) m) (add-ℕ (mul-ℕ n m) m)
+left-successor-law-mul-ℕ = {!   !}
+
+-- Harder
+right-successor-law-mul-ℕ : {n m : ℕ} → Id (mul-ℕ n (succ-ℕ m)) (add-ℕ n (mul-ℕ n m))
+right-successor-law-mul-ℕ = {!   !}
+```
+
+### Part (b)
+
+Show that multiplication on `ℕ` is commutative.
+
+```agda
+commutative-law-mul-ℕ : {n m : ℕ} → Id (mul-ℕ n m) (mul-ℕ m n)
+commutative-law-mul-ℕ = {!   !}
 ```
