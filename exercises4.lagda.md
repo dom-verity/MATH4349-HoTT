@@ -340,7 +340,7 @@ ind-Id b _ refl = b
 As a rule in "pen and paper" type theory this rule is displayed in the equivalent form:
 
 ```math
-\dfrac{\Gamma\vdash a : A \hspace{2em} \Gamma, x : A, p : Id(a, x) ⊢ B(x, p)\,\text{type} \;\;}{\Gamma\vdash \text{ind-Id}_a : B(a, refl_a) → \Pi_{x : A} \Pi_{p : \text{Id}(a,x)} B x p}
+\dfrac{\Gamma\vdash a : A \hspace{2em} \Gamma, x : A, p : Id(a, x) ⊢ B(x, p)\,\text{type} \;\;}{\Gamma\vdash \text{ind-Id}_a : B(a, refl_a) → \Pi_{x : A} \Pi_{p : \text{Id}(a,x)} B(x, p)}
 ```
 
 ### The "[_Groupoid_](https://en.wikipedia.org/wiki/Groupoid)" structure of types ([Rijke](https://arxiv.org/abs/2212.11082) section 5.2)
@@ -614,4 +614,22 @@ inv-con s = {!   !}
 con-inv : {i : Level}{A : UU i}{x y z : A}{p : Id x y}{q : Id y z}{r : Id x z} → 
           Id (p · q) r → Id p (r · (inv q))
 con-inv s = {!   !}
+```
+
+## Exercise 4.5 ([Rijke](https://arxiv.org/abs/2212.11082) exercise 5.3)
+
+Given a type `A : UU i` and a type family `B : A → UU j`, define a function `lift` that maps an element `b : B a` and a path `p : Id a a'` in `A` to a path `lift b p` in `Σ x ∈ A , B a` whose initial point is `pair a b`.
+
+```agda
+lift : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A} → (b : B a) → (p : Id a a') → 
+       Id (pair a b) (pair a' (tr {B = B} p b))
+lift b p = {!   !}
+```
+
+Also prove the following theorem, which shows that the path `lift b p` is indeed a lift of `p`, in the sense that when we apply the projection `pr₁ : Σ x ∈ A , B x → A` to the path `lift p b` we get a path which is equal to `p`.
+
+```agda
+lift-lifts : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A}{b : B a}{p : Id a a'} → 
+             Id (ap pr₁ (lift {B = B} b p)) p
+lift-lifts = {!   !}
 ```
