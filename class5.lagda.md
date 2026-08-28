@@ -548,13 +548,13 @@ fold-list : {i j : Level}{A : UU i}{B : UU j} → B → (A → B → B) → list
 fold-list = ind-list-nd-Dom
 ```
 
-James pointed out that his version of the rule was more general and that the extra parameter afforded to the parameter `f : A → list A → B → B` was necessary for certain examples. I then claimed that we could derive James' induction principle from mine, but I mucked up the proof so this claim is definitely a little under baked at this time.
+James pointed out that his version of the rule was more general and that the extra parameter of type `list A` given to the input function `f : A → list A → B → B` was necessary for certain examples. I then made the claim that we could derive James' induction principle from mine, but we didn't derive a proof at the time so this claim is definitely a little under baked.
 
 We'll return to this particular matter shortly, but to whet our appetites lets look at the corresponding question for natural number induction.
 
 ### Non-dependent natural number induction
 
-If we follow the patterns that James and I established we get two slightly different non-dependent induction principles. First James' _"erase the dependency of the type family `B`"_ variant:
+If we follow the patterns that James and I established we get two slightly different non-dependent induction principles. First James' "erase the dependency of the type family `B`" variant:
 
 ```agda
 ind-ℕ-nd-James : {i : Level}{B : UU i} → B → (ℕ → B → B) → ℕ → B 
@@ -562,7 +562,7 @@ ind-ℕ-nd-James b f zero-ℕ = b
 ind-ℕ-nd-James b f (succ-ℕ n) = f n (ind-ℕ-nd-James b f n)
 ```
 
-And here is my _"replace the constructors `zero-ℕ` : ℕ` and `succ-ℕ : ℕ → ℕ` by elements `b : B` and `f : B → B` whose types are obtained by replacing `ℕ` by `B` in the types of the constructors"_ variant:
+And here is my "replace the constructors `zero-ℕ` : ℕ` and `succ-ℕ : ℕ → ℕ` by elements `b : B` and `f : B → B` whose types are obtained by replacing `ℕ` by `B` in the types of the constructors" variant:
 
 ```agda
 ind-ℕ-nd-Dom : {i : Level}{B : UU i} → B → (B → B) → ℕ → B 
