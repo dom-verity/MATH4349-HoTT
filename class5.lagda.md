@@ -622,7 +622,7 @@ ind-ℕ-nd-James-prop zero-ℕ = refl
 ind-ℕ-nd-James-prop {b = b} {f = f} (succ-ℕ n) = ap (Ind-ℕ-nd-aux.f' b f) (ind-ℕ-nd-James-prop n)
 ```
 
-In other words, we have succeeded in constructing the induction principle `ind-ℕ-nd-James` from the simpler "fold-ey" induction principle `ind-ℕ-nd-Dom`. :)
+In other words, we have succeeded in constructing the induction principle `ind-ℕ-nd-James` from the simpler "fold-ey" induction principle `ind-ℕ-nd-Dom`. That said, there is no particular reason to prefer one of these over the other.
 
 ### Dependent natural number induction from `fold-ℕ`.
 
@@ -697,7 +697,7 @@ ind-list-another-prop {b = b} {f = f} (cons a as)
     rewrite (ind-list-another-prop {b = b} {f = f} as) = refl
 ```
 
-### The `rewrite` clause
+#### The `rewrite` clause
 
 The proof of `ind-list-another-prop` features the use of a [_`rewrite` construct_](https://agda.readthedocs.io/en/stable/language/with-abstraction.html#rewrite) in its second clause. In essence this is a more convenient way to transport elements along a path than the `tr` function. The key issue when using `tr` is that Agda is often unable to infer the type family whose fibres you are transporting between, so you are forced to supply this, often quite complicated, information. 
 
@@ -710,3 +710,119 @@ The `rewrite` construct  can be a great help in such situations, in essence it t
 In the example above, I use `rewrite` with the recursively constructed identification `ind-list-another-prop {b = b} {f = f} as` which acts to replace all expressions of the form `ind-list-aux b f as` with the term `pair as (ind-list b f as)` in the goal type. That goal type was originally `ind-list-aux b f (cons a as) ≡ pair (cons a as) (ind-list b f (cons a as))` and its left hand expression expands to `Ind-list-aux.f' b f a (ind-list-aux b f as)` which our rewrite transforms to `Ind-list-aux.f' b f a (pair as (ind-list b f as))` and this is easily seen to evaluate to `pair (cons a as) (f a as (ind-list b f as))`. Notice, however, that the right hand term also reduces to that same expression by the second clause in the definition of `ind-list`, so we now have a identity type between definitionally equal terms which certainly contains the term `refl`.
 
 From now on I'll take the liberty of using `rewrite`s in preference to explicit applications of `tr` and `ap`, but I will do my best to explain what those rewrites are doing as we go along.
+
+### A slightly more interesting example - the dependent family `fin : ℕ → UU i → UU i`.
+
+In the examples `ℕ` and `list A` given above, our reduction of the general dependent induction rule to a non-dependent rule may, on second thoughts, be not be as profound as it seems. After all, `ℕ` is a fixed type and `list` is a family of types of a particularly simple kind. To explain the sense in which `list` is a very simple type family we differentiate the ways in which such families can depend on their parameters as follows. A type family `B a₁ a₂ … aₙ` which depends on values `a₁ : A₁`, `a₂ : A₂`, … , `aₙ : Aₘ` is said to be:
+
+* **Parameterised by `aᵢ`**, if in the type signatures of its constructors the same element of `Aᵢ` (which might as well be a variable of type `Aᵢ`) occurs in all applied instances of the type `B`. In this case we sometimes say that `B` is **polymorphic** or **uniform** in its `i`<sup>th</sup> variable.
+
+* **Generally dependent on `aᵢ`**, if the type signatures of its constructors contain instances of the type `B` whose `i`<sup>th</sup> arguments are different elements of `Aᵢ`.
+
+In an Agda `data` declaration we can distinguish parametric and general dependencies by their position in its type signature. So if our type family `B` was defined with the following declaration ...
+
+```code
+data (a₁ : A₁) … (aₘ : Aₘ) : (aₘ₊₁ : Aₘ₊₁) → … → (aₙ : Aₙ) → UU i where
+```
+
+.. then it is _parameterised_ by the parameters `a₁`, ..., `aₘ` and it _generally depends_ on `aₘ₊₁`, ..., `aₙ`. If a type family is parametric in all of its parameters then it is said to be a **parametric type family**, otherwise we say that it is a **dependent type family**.
+
+We can think of a parametric type family `B` as defining an algebraic data type `B a₁ a₂ … aₙ` for each fixed sequence of arguments `a₁, a₂, …, aₙ` each one of which has the same constructors and induction principle.
+
+For example the sense in which `list` is a simple kind of type family is simply that it is uniform in all of its parameters, as we can see from its declaration ...
+
+```code
+data {i : Level} (A : UU i) : UU i where
+    nil : list A 
+    cons : A → list A → list A
+```
+
+... it is therefore a parametric type family. On the other hand the identity type `Id s t` is a general kind of dependently typed family ...
+
+```code
+data {i : Level} {A : UU i} (s : A) : (t : A) → Id s t where
+    refl : (a : A) → Id a a
+```
+
+... since it is parametric in `i`, `A` and `s` but it depends more generally on `t`. The precise induction principle that Agda infers for a given data type definition depends upon whether its varies uniformly or generally on each of its parameters.
+
+Since parameterised type families may be regarded as being types that are defined for each **fixed** set of arguments, we might expect pretty much any principle that applies for fixed types to apply to each instance of that type family. On the other hand, general dependent type families are much more subtle, so maybe the argument we gave to relate the non-dependent induction rule of the parameterised type family `list` won't generalise to more generally dependent families. 
+
+This, however, doesn't turn out to be the case as we can see from the following example. We define the dependent type family of _finite lists of length `n`_ as follows.
+
+```agda
+data fin {i : Level} (A : UU i) : ℕ → UU i where
+    fnil : fin A zero-ℕ
+    fcons : {n : ℕ} → A → fin A n → fin A (succ-ℕ n)
+``` 
+
+This is parameterised by the type `A : UU i` (and implicitly by `i : Level`) but it depends more generally on its final parameter of type `ℕ`. Notice here, for example, that the type signature for `fnil` is specialised at the specific instance `fin A zero-ℕ` and that the type signature of `fcons` contains two distinct instances `fin A n` and `fin A (succ-ℕ n)`. This means that the type `fin` **definately** isn't uniform in its third parameter.
+
+Here are the fully dependent induction rule for this type and its "fold-ey" non-dependent cousin.
+
+```agda
+ind-fin : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
+          ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → B as
+ind-fin b f fnil = b
+ind-fin b f (fcons a as) = f a as (ind-fin b f as) 
+
+ind-fin-nd : {i j : Level} {A : UU i} {B : UU j} → B → (A → B → B) → {n : ℕ} → fin A n → B
+ind-fin-nd b f fnil = b
+ind-fin-nd b f (fcons a as) = f a (ind-fin-nd b f as)
+```
+
+We could spend a little time comparing these and asking the question "how is the form of these two rules influenced by the classification of the parameters of `fin` as uniform or generally dependent?" We might, however, leave that for another day and follow our method above by using the non-dependent induction rule `ind-fin-nd` to define a auxiliary induction rule which we hope to relate to `ind-fin`.
+
+```agda
+ind-fin-aux : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
+              ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → 
+              (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
+ind-fin-aux {A = A} {B = B} b f = ind-fin-nd b' f'
+    module Ind-fin-aux where
+        b' : (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
+        b' = pair (pair zero-ℕ fnil) b
+
+        f' : A → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
+        f' a (pair (pair n as) b) = pair (pair (succ-ℕ n) (fcons a as)) (f a as b)
+```
+
+Notice here that we've written the return type as `Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as` rather than the possibly expected `Σ n ∈ ℕ, (Σ as ∈ fin A n , B as)`. These types are, in fact, isomorphic but it turns out that the first form is a little easier to work with. We may now prove the following lemma which, as above, computes the first component of the returned value of `inf-fin-aux`.
+
+```agda
+ind-fin-aux-pr₁-lemma : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} {b : B fnil}
+                        {f : {n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)} {n : ℕ} (as : fin A n) →
+                        (pr₁ (ind-fin-aux b f as)) ≡ pair n as
+ind-fin-aux-pr₁-lemma {b = b} {f = f} fnil = refl
+ind-fin-aux-pr₁-lemma {A = A} {b = b} {f = f} (fcons a as) = ap k (ind-fin-aux-pr₁-lemma as)
+    where
+        k : (Σ n ∈ ℕ , fin A n) → (Σ n ∈ ℕ , fin A n)
+        k (pair n as) = pair (succ-ℕ n) (fcons a as)
+```
+
+Had we instead used `Σ n ∈ ℕ, (Σ as ∈ fin A n , B as)` as the return type of `ind-fin-aux` then we would have had to prove two separate lemmas here, the second of which is actually dependent of the first thus making it both harder to express (we need to use transport) and to prove.
+
+Now we can define another function from `ind-fin-aux` (by projection) which has the same type signature as `ind-fin` ...
+
+```agda
+ind-fin-another : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
+                  ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → B as
+ind-fin-another {B = B} b f as = tr {B = λ (pair n as) → B as} (ind-fin-aux-pr₁-lemma as) (pr₂ (ind-fin-aux b f as))
+```
+
+... and finally we have a proposition relating the two.
+
+```agda
+ind-fin-another-prop : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} {b : B fnil} 
+                       {f : {n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)}{n : ℕ}(as : fin A n) →
+                       ind-fin-aux b f as ≡ pair (pair n as) (ind-fin b f as)
+ind-fin-another-prop fnil = refl
+ind-fin-another-prop {A = A} {B = B}{ b = b} {f = f} {n = succ-ℕ n} (fcons a as) = ap k (ind-fin-another-prop as) 
+    where
+        k : (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
+        k (pair (pair n as) b) = pair (pair (succ-ℕ n) (fcons a as)) (f a as b)
+```
+
+So even in this more complex, generally dependent case, we can still prove the same result with much the same proof structure (compare the two).
+
+Of course, you might complain that my proof of `ind-fin-another-prop` uses the builtin pattern matching system of Agda which is, itself, built upon the dependent induction rule for `fin`. This is a valid criticism, but with a small amount more work it is certainly possible to re-express proof of `ind-fin-another-prop` in terms of `ind-fin-another` and hence in terms of `ind-fin-nd` and properties of Σ-types alone.
+
