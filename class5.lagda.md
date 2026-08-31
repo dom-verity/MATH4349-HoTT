@@ -711,7 +711,7 @@ In the example above, I use `rewrite` with the recursively constructed identific
 
 From now on I'll take the liberty of using `rewrite`s in preference to explicit applications of `tr` and `ap`, but I will do my best to explain what those rewrites are doing as we go along.
 
-### A slightly more interesting example - the dependent family `fin : ℕ → UU i → UU i`.
+### A slightly more interesting example - the dependent family `vec : ℕ → UU i → UU i`.
 
 In the examples `ℕ` and `list A` given above, our reduction of the general dependent induction rule to a non-dependent rule may, on second thoughts, be not be as profound as it seems. After all, `ℕ` is a fixed type and `list` is a family of types of a particularly simple kind. To explain the sense in which `list` is a very simple type family we differentiate the ways in which such families can depend on their parameters as follows. A type family `B a₁ a₂ … aₙ` which depends on values `a₁ : A₁`, `a₂ : A₂`, … , `aₙ : Aₘ` is said to be:
 
@@ -751,78 +751,94 @@ Since parameterised type families may be regarded as being types that are define
 This, however, doesn't turn out to be the case as we can see from the following example. We define the dependent type family of _finite lists of length `n`_ as follows.
 
 ```agda
-data fin {i : Level} (A : UU i) : ℕ → UU i where
-    fnil : fin A zero-ℕ
-    fcons : {n : ℕ} → A → fin A n → fin A (succ-ℕ n)
+data vec {i : Level} (A : UU i) : ℕ → UU i where
+    vnil : vec A zero-ℕ
+    vcons : {n : ℕ} → A → vec A n → vec A (succ-ℕ n)
 ``` 
 
-This is parameterised by the type `A : UU i` (and implicitly by `i : Level`) but it depends more generally on its final parameter of type `ℕ`. Notice here, for example, that the type signature for `fnil` is specialised at the specific instance `fin A zero-ℕ` and that the type signature of `fcons` contains two distinct instances `fin A n` and `fin A (succ-ℕ n)`. This means that the type `fin` **definately** isn't uniform in its third parameter.
+This is parameterised by the type `A : UU i` (and implicitly by `i : Level`) but it depends more generally on its final parameter of type `ℕ`. Notice here, for example, that the type signature for `vnil` is specialised at the specific instance `vec A zero-ℕ` and that the type signature of `vcons` contains two distinct instances `vec A n` and `vec A (succ-ℕ n)`. This means that the type `vec` **definitely** isn't uniform in its third parameter.
 
 Here are the fully dependent induction rule for this type and its "fold-ey" non-dependent cousin.
 
 ```agda
-ind-fin : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
-          ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → B as
-ind-fin b f fnil = b
-ind-fin b f (fcons a as) = f a as (ind-fin b f as) 
+ind-vec : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : vec A n) → UU j} → (B vnil) → 
+          ({n : ℕ} → (a : A) → (as : vec A n) → B as → B (vcons a as)) → {n : ℕ} → (as : vec A n) → B as
+ind-vec b f vnil = b
+ind-vec b f (vcons a as) = f a as (ind-vec b f as) 
 
-ind-fin-nd : {i j : Level} {A : UU i} {B : UU j} → B → (A → B → B) → {n : ℕ} → fin A n → B
-ind-fin-nd b f fnil = b
-ind-fin-nd b f (fcons a as) = f a (ind-fin-nd b f as)
+ind-vec-nd : {i j : Level} {A : UU i} {B : UU j} → B → (A → B → B) → {n : ℕ} → vec A n → B
+ind-vec-nd b f vnil = b
+ind-vec-nd b f (vcons a as) = f a (ind-vec-nd b f as)
 ```
 
-We could spend a little time comparing these and asking the question "how is the form of these two rules influenced by the classification of the parameters of `fin` as uniform or generally dependent?" We might, however, leave that for another day and follow our method above by using the non-dependent induction rule `ind-fin-nd` to define a auxiliary induction rule which we hope to relate to `ind-fin`.
+We could spend a little time comparing these and asking the question "how is the form of these two rules influenced by the classification of the parameters of `vec` as uniform or generally dependent?" We might, however, leave that for another day and follow our method above by using the non-dependent induction rule `ind-vec-nd` to define a auxiliary induction rule which we hope to relate to `ind-vec`.
 
 ```agda
-ind-fin-aux : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
-              ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → 
-              (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
-ind-fin-aux {A = A} {B = B} b f = ind-fin-nd b' f'
-    module Ind-fin-aux where
-        b' : (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
-        b' = pair (pair zero-ℕ fnil) b
+ind-vec-aux : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : vec A n) → UU j} → (B vnil) → 
+              ({n : ℕ} → (a : A) → (as : vec A n) → B as → B (vcons a as)) → {n : ℕ} → 
+              (as : vec A n) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as)
+ind-vec-aux {A = A} {B = B} b f = ind-vec-nd b' f'
+    module Ind-vec-aux where
+        b' : (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as)
+        b' = pair (pair zero-ℕ vnil) b
 
-        f' : A → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
-        f' a (pair (pair n as) b) = pair (pair (succ-ℕ n) (fcons a as)) (f a as b)
+        f' : A → (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as)
+        f' a (pair (pair n as) b) = pair (pair (succ-ℕ n) (vcons a as)) (f a as b)
 ```
 
-Notice here that we've written the return type as `Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as` rather than the possibly expected `Σ n ∈ ℕ, (Σ as ∈ fin A n , B as)`. These types are, in fact, isomorphic but it turns out that the first form is a little easier to work with. We may now prove the following lemma which, as above, computes the first component of the returned value of `inf-fin-aux`.
+Notice here that we've written the return type as `Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as` rather than the possibly expected `Σ n ∈ ℕ, (Σ as ∈ vec A n , B as)`. These types are, in fact, isomorphic but it turns out that the first form is a little easier to work with. We may now prove the following lemma which, as above, computes the first component of the returned value of `inf-vec-aux`.
 
 ```agda
-ind-fin-aux-pr₁-lemma : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} {b : B fnil}
-                        {f : {n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)} {n : ℕ} (as : fin A n) →
-                        (pr₁ (ind-fin-aux b f as)) ≡ pair n as
-ind-fin-aux-pr₁-lemma {b = b} {f = f} fnil = refl
-ind-fin-aux-pr₁-lemma {A = A} {b = b} {f = f} (fcons a as) = ap k (ind-fin-aux-pr₁-lemma as)
+ind-vec-aux-pr₁-lemma : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : vec A n) → UU j} {b : B vnil}
+                        {f : {n : ℕ} → (a : A) → (as : vec A n) → B as → B (vcons a as)} {n : ℕ} (as : vec A n) →
+                        (pr₁ (ind-vec-aux b f as)) ≡ pair n as
+ind-vec-aux-pr₁-lemma {b = b} {f = f} vnil = refl
+ind-vec-aux-pr₁-lemma {A = A} {b = b} {f = f} (vcons a as) = ap k (ind-vec-aux-pr₁-lemma as)
     where
-        k : (Σ n ∈ ℕ , fin A n) → (Σ n ∈ ℕ , fin A n)
-        k (pair n as) = pair (succ-ℕ n) (fcons a as)
+        k : (Σ n ∈ ℕ , vec A n) → (Σ n ∈ ℕ , vec A n)
+        k (pair n as) = pair (succ-ℕ n) (vcons a as)
 ```
 
-Had we instead used `Σ n ∈ ℕ, (Σ as ∈ fin A n , B as)` as the return type of `ind-fin-aux` then we would have had to prove two separate lemmas here, the second of which is actually dependent of the first thus making it both harder to express (we need to use transport) and to prove.
+Had we instead used `Σ n ∈ ℕ, (Σ as ∈ vec A n , B as)` as the return type of `ind-vec-aux` then we would have had to prove two separate lemmas here, the second of which is actually dependent of the first thus making it both harder to express (we need to use transport) and to prove.
 
-Now we can define another function from `ind-fin-aux` (by projection) which has the same type signature as `ind-fin` ...
+Now we can define another function from `ind-vec-aux` (by projection) which has the same type signature as `ind-vec` ...
 
 ```agda
-ind-fin-another : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} → (B fnil) → 
-                  ({n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)) → {n : ℕ} → (as : fin A n) → B as
-ind-fin-another {B = B} b f as = tr {B = λ (pair n as) → B as} (ind-fin-aux-pr₁-lemma as) (pr₂ (ind-fin-aux b f as))
+ind-vec-another : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : vec A n) → UU j} → (B vnil) → 
+                  ({n : ℕ} → (a : A) → (as : vec A n) → B as → B (vcons a as)) → {n : ℕ} → (as : vec A n) → B as
+ind-vec-another {B = B} b f as = tr {B = λ (pair n as) → B as} (ind-vec-aux-pr₁-lemma as) (pr₂ (ind-vec-aux b f as))
 ```
 
 ... and finally we have a proposition relating the two.
 
 ```agda
-ind-fin-another-prop : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : fin A n) → UU j} {b : B fnil} 
-                       {f : {n : ℕ} → (a : A) → (as : fin A n) → B as → B (fcons a as)}{n : ℕ}(as : fin A n) →
-                       ind-fin-aux b f as ≡ pair (pair n as) (ind-fin b f as)
-ind-fin-another-prop fnil = refl
-ind-fin-another-prop {A = A} {B = B}{ b = b} {f = f} {n = succ-ℕ n} (fcons a as) = ap k (ind-fin-another-prop as) 
+ind-vec-another-prop : {i j : Level} {A : UU i} {B : {n : ℕ} → (as : vec A n) → UU j} {b : B vnil} 
+                       {f : {n : ℕ} → (a : A) → (as : vec A n) → B as → B (vcons a as)}{n : ℕ}(as : vec A n) →
+                       ind-vec-aux b f as ≡ pair (pair n as) (ind-vec b f as)
+ind-vec-another-prop vnil = refl
+ind-vec-another-prop {A = A} {B = B}{ b = b} {f = f} {n = succ-ℕ n} (vcons a as) = ap k (ind-vec-another-prop as) 
     where
-        k : (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , fin A n) , B as)
-        k (pair (pair n as) b) = pair (pair (succ-ℕ n) (fcons a as)) (f a as b)
+        k : (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as) → (Σ (pair n as) ∈ (Σ n ∈ ℕ , vec A n) , B as)
+        k (pair (pair n as) b) = pair (pair (succ-ℕ n) (vcons a as)) (f a as b)
 ```
 
 So even in this more complex, generally dependent case, we can still prove the same result with much the same proof structure (compare the two).
 
-Of course, you might complain that my proof of `ind-fin-another-prop` uses the builtin pattern matching system of Agda which is, itself, built upon the dependent induction rule for `fin`. This is a valid criticism, but with a small amount more work it is certainly possible to re-express proof of `ind-fin-another-prop` in terms of `ind-fin-another` and hence in terms of `ind-fin-nd` and properties of Σ-types alone.
+Of course, you might complain that my proof of `ind-vec-another-prop` uses the builtin pattern matching system of Agda which is, itself, built upon the dependent induction rule for `vec`. This is a valid criticism, but with a small amount more work it is certainly possible to re-express proof of `ind-vec-another-prop` in terms of `ind-vec-another` and hence in terms of `ind-vec-nd` and properties of Σ-types alone.
+
+### Proving disjointness (no confusion) and injectivity for the constructors of `ℕ`
+
+In class we discussed two properties that hold for the constructors of algebraic data types:
+
+* **Disjointness**, which states that if `s` and `t` are two terms of the data type whose head (outermost) constructors are distinct then they are un-equal - in other words there is a term of type `¬ (s ≡ t) = (s ≡ t) → ∅`.
+
+* **Injectivity**, which is the property that if `C` is a constructor and `C s₁ s₂ ... sₙ ≡ C t₁ t₂ ... tₙ` then `s₁ ≡ t₁`, `s₂ ≡ t₂`, ..., `sₙ ≡ tₙ`.
+
+These results are sometimes referred to as **no confusion** principles.
+
+Lemmas of this kind for the constructors of `ℕ` were suggested by exercises 4.1 and 4.2, and in Agda they can all be proved quite easily using case splitting and pattern matching. Under the bonnet what actually happens is that Agda proves these principles for each new datatype using its induction rule and then uses them to implement pattern matching itself. 
+
+Hayley suggested an approach to proving the disjointness property for `ℕ` which can be summarised as follows:
+
+* Use `ind-ℕ` to define a type family `ℕ → UU lzero` which maps `zero-ℕ` to `∅` and all successor terms `succ-ℕ t` to  
 
