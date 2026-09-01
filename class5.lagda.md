@@ -864,7 +864,7 @@ The approach there proceeds by defining an **observational** variant of equality
 
 First we should discuss double induction. The induction rule for `ℕ` allows us to build dependent functions of type `(n : ℕ) → A n` and correspondingly its double induction rule gives us a way to build dependent functions with two parameters of type `ℕ` whose type is `(n m : ℕ) → A n m`. We can derive a rule of this kind by applying single induction a few times as follows.
 
-* First observe that in the double induction rule we are constructing the type family `A` has type `ℕ → ℕ → UU i`.
+* First observe that, in the double induction rule we are constructing, the type family `A` has type `ℕ → ℕ → UU i`.
 
 * Now a two parameter dependent function `(n m : ℕ) → A n m` can otherwise be thought of as a single parameter dependent function `(n : ℕ) → ((m : ℕ) → A n m)` whose return value is typed by the single parameter type family `B n := ((m : ℕ) → A n m)`.
 
@@ -876,7 +876,7 @@ First we should discuss double induction. The induction rule for `ℕ` allows us
     (l : (n : ℕ) → B n → B (succ-ℕ n)) → 
     (n : ℕ) → B n`
   ```
-  which on substituting `B n :- ((m : ℕ) → A n m)` becomes.
+  which on substituting `B n := ((m : ℕ) → A n m)` becomes.
 
   ```code
   {i : Level}{A : ℕ → ℕ → UU i} → 
@@ -944,11 +944,13 @@ obs-eq-to-≡ : {n m : ℕ} → obs-eq-ℕ n m → n ≡ m
 obs-eq-to-≡ {n = n} {m = m} = 
     double-ind-ℕ-simple {A = λ n m → obs-eq-ℕ n m → n ≡ m} 
                         (λ o → refl)
-                        (λ _ _ o → ex-falso o) -- obs-eq-ℕ zero-ℕ (succ-ℕ m) = ∅ so can apply ex-falso
-                        (λ _ _ o → ex-falso o) -- obs-eq-ℕ (succ-ℕ n) zero-ℕ = ∅ so can again apply ex-falso
+                        (λ _ _ o → ex-falso o) 
+                            -- obs-eq-ℕ zero-ℕ (succ-ℕ m) = ∅ so can apply ex-falso
+                        (λ _ _ o → ex-falso o) 
+                            -- obs-eq-ℕ (succ-ℕ n) zero-ℕ = ∅ so ex-falso again
                         (λ n m f o → ap succ-ℕ (f o)) n m 
-                                              -- obs-eq-ℕ (succ-ℕ n) (succ-ℕ n) = obs-eq-ℕ n n = 𝟙 so `o`
-                                              -- is in both and we can apply `f` to it. 
+                            -- obs-eq-ℕ (succ-ℕ n) (succ-ℕ n) = obs-eq-ℕ n n = 𝟙 definitionally
+                            -- so `o` is in both and we can apply `f` to it. 
 ```
 
 The converse direction is a simple matter of path induction.
