@@ -840,5 +840,149 @@ Lemmas of this kind for the constructors of `ℕ` were suggested by exercises 4.
 
 Hayley suggested an approach to proving the disjointness property for `ℕ` which can be summarised as follows:
 
-* Use `ind-ℕ` to define a type family `ℕ → UU lzero` which maps `zero-ℕ` to `∅` and all successor terms `succ-ℕ t` to  
+* Use `ind-ℕ` to define a type family `non-zero : ℕ → UU lzero` which maps `zero-ℕ` to `∅` and all successor terms `succ-ℕ t` to `𝟙`.
+
+* Give a proof of `¬ (zero-ℕ ≡ succ-ℕ t)` by assuming proof `p : succ-ℕ t ≡ zero-ℕ` and transporting the proof `∗ : non-zero (succ-ℕ t) = 𝟙` along `p` to give a proof of `non-zero zero-ℕ = ∅` and hence a contradiction.
+
+Here is this approach expressed in Agda.
+
+```agda
+non-zero : ℕ → UU lzero
+non-zero n = ind-ℕ ∅ (λ _ _ → 𝟙) n
+
+disjoint-zero-ℕ-and-succ-ℕ : {n : ℕ} → ¬ (succ-ℕ n ≡ zero-ℕ)
+disjoint-zero-ℕ-and-succ-ℕ p = tr {B = non-zero} p ∗
+```
+
+Notice that I've used the induction principle for `ℕ` rather than pattern matching to define `non-zero`, in order to avoid implicitly using the fact that Agda's pattern matching mechanism already knows and applies the `disjoint-zero-ℕ-and-succ-ℕ` rule.
+
+Hayley also suggested a proof of the injectivity rule for `succ-ℕ` which involved defining the predecessor function `pred-ℕ : ℕ → ℕ` and we discussed possible way to generalise that proof to other situations where we might not have an obvious candidate for the generalisation of `pred-ℕ`. 
+
+As it happens, I clearly hadn't read far enough ahead in [Rijke](https://arxiv.org/abs/2212.11082) to realise that he'd covered precisely this question in chapter 6 (which is on this week's reading list). The proof of these facts that he describes there is very closely related to the general argument that underpins the way that Agda infers these no confusion principles for arbitrary data types.
+
+The approach there proceeds by defining an **observational** variant of equality of natural numbers, using (double) induction on `ℕ`, which gives us an algorithm for checking equality on `ℕ`.
+
+First we should discuss double induction. The induction rule for `ℕ` allows us to build dependent functions of type `(n : ℕ) → A n` and correspondingly its double induction rule gives us a way to build dependent functions with two parameters of type `ℕ` whose type is `(n m : ℕ) → A n m`. We can derive a rule of this kind by applying single induction a few times as follows.
+
+* First observe that in the double induction rule we are constructing the type family `A` has type `ℕ → ℕ → UU i`.
+
+* Now a two parameter dependent function `(n m : ℕ) → A n m` can otherwise be thought of as a single parameter dependent function `(n : ℕ) → ((m : ℕ) → A n m)` whose return value is typed by the single parameter type family `B n := ((m : ℕ) → A n m)`.
+
+* So we can apply natural number induction to build a function of type `(n : ℕ) → B n`, its type signature is
+
+  ```code
+  {i : Level}{B : ℕ → UU i} → 
+    (k : B zero-ℕ) → 
+    (l : (n : ℕ) → B n → B (succ-ℕ n)) → 
+    (n : ℕ) → B n`
+  ```
+  which on substituting `B n :- ((m : ℕ) → A n m)` becomes.
+
+  ```code
+  {i : Level}{A : ℕ → ℕ → UU i} → 
+    (k : (m : ℕ) → A zero-ℕ m) → 
+    (l : (n : ℕ) → ((m : ℕ) → A n m) → ((m : ℕ) → A (succ-ℕ n) m)) →
+    (n : ℕ) → (m : ℕ) → A n m
+  ```
+* Now we can construct a value to feed into the parameter `k` of type `(m : ℕ) → A zero-ℕ m` by again applying natural number induction in `m : ℕ`, which constructs such a function from a pair of values `a : A zero-ℕ zero-ℕ` and `f : (m : ℕ) → A zero-ℕ m → A zero-ℕ (succ-ℕ m)`. On substituting `ind-ℕ a f` for `k` we obtain a function `λ a f l → ind-ℕ (ind-ℕ a f) l` with the following type signature:
+
+  ```code
+  {i : Level}{A : ℕ → ℕ → UU i} → 
+    (a : A zero-ℕ zero-ℕ) →
+    (f : (m : ℕ) → A zero-ℕ m → A zero-ℕ (succ-ℕ m)) →
+    (l : (n : ℕ) → ((m : ℕ) → A n m) → ((m : ℕ) → A (succ-ℕ n) m)) →
+    (n : ℕ) → (m : ℕ) → A n m
+  ```
+* To construct a value of value to feed into the parameter `l` of type `(n : ℕ) → ((m : ℕ) → A n m) → ((m : ℕ) → A (succ-ℕ n) m)` we can fix its first two parameters, of types `n : ℕ` and `t : (m : ℕ) → A n m`, and use natural number induction, yet again, to construct a function of type `(m : ℕ) → A (succ-ℕ n) m`. This requires us to provide a value `gₙₜ : A (succ-ℕ n) zero-ℕ` and a function `kₙₜ : (m : ℕ) → A (succ-ℕ n) m → A (succ-ℕ n) (succ-ℕ m)`. So we can replace `l` by a pair of functions of the following types:
+
+  ```code
+  g : (n : ℕ) → ((m : ℕ) → A n m) → A (succ-ℕ n) zero-ℕ
+  k : (n : ℕ) → ((m : ℕ) → A n m) → (m : ℕ) → A (succ-ℕ n) m → A (succ-ℕ n) (succ-ℕ m)
+  ```
+
+  on substituting `λ n t → ind-ℕ (g n t) (k n t)` for `l` we obtain the following function 
+  
+```agda
+double-ind-ℕ : {i : Level}{A : ℕ → ℕ → UU i} → 
+    (a : A zero-ℕ zero-ℕ) →
+    (f : (m : ℕ) → A zero-ℕ m → A zero-ℕ (succ-ℕ m)) →
+    (g : (n : ℕ) → ((m : ℕ) → A n m) → A (succ-ℕ n) zero-ℕ) →
+    (k : (n : ℕ) → ((m : ℕ) → A n m) → (m : ℕ) → A (succ-ℕ n) m → A (succ-ℕ n) (succ-ℕ m)) →
+    (n m : ℕ) → A n m
+double-ind-ℕ a f g k = ind-ℕ (ind-ℕ a f) (λ n t → ind-ℕ (g n t) (k n t))
+```
+
+This is the fully general double induction rule for the natural numbers, but in practice it can be a little difficult to work with. The following simpler and more symmetric rule will often suffice.
+
+```agda
+double-ind-ℕ-simple : {i : Level}{A : ℕ → ℕ → UU i} → 
+    (a : A zero-ℕ zero-ℕ) →
+    (f : (m : ℕ) → A zero-ℕ m → A zero-ℕ (succ-ℕ m)) →
+    (g : (n : ℕ) → A n zero-ℕ → A (succ-ℕ n) zero-ℕ) →
+    (k : (n m : ℕ) → A n m → A (succ-ℕ n) (succ-ℕ m)) →
+    (n m : ℕ) → A n m
+double-ind-ℕ-simple a f g k = 
+    double-ind-ℕ a f (λ n t → g n (t zero-ℕ)) (λ n t m a → k n m (t m))
+```
+
+Of course, in day to day use of Agda we don't need to worry about these double induction rules because they arise naturally in terms of pattern matching on successive parameters.
+
+Now we can define the observational version of equality on `ℕ` discussed in chapter 6 of [Rijke]((https://arxiv.org/abs/2212.11082) and prove some of its basic properties using our simplified double induction rule.
+
+```agda 
+obs-eq-ℕ : ℕ → ℕ → UU lzero
+obs-eq-ℕ = double-ind-ℕ-simple 𝟙 (λ _ _ → ∅) (λ _ _ → ∅) (λ _ _ t → t)
+
+obs-eq-ℕ-refl : {n : ℕ} → obs-eq-ℕ n n
+obs-eq-ℕ-refl {n = n} = ind-ℕ {A = λ n → obs-eq-ℕ n n} ∗ (λ _ p → p) n
+```
+
+Then we can relate `obs-eq-ℕ` and the identity type on `ℕ` - there are maps in both directions. The first is defined using (simple) double induction on `ℕ`. 
+
+```agda
+obs-eq-to-≡ : {n m : ℕ} → obs-eq-ℕ n m → n ≡ m
+obs-eq-to-≡ {n = n} {m = m} = 
+    double-ind-ℕ-simple {A = λ n m → obs-eq-ℕ n m → n ≡ m} 
+                        (λ o → refl)
+                        (λ _ _ o → ex-falso o) -- obs-eq-ℕ zero-ℕ (succ-ℕ m) = ∅ so can apply ex-falso
+                        (λ _ _ o → ex-falso o) -- obs-eq-ℕ (succ-ℕ n) zero-ℕ = ∅ so can again apply ex-falso
+                        (λ n m f o → ap succ-ℕ (f o)) n m 
+                                              -- obs-eq-ℕ (succ-ℕ n) (succ-ℕ n) = obs-eq-ℕ n n = 𝟙 so `o`
+                                              -- is in both and we can apply `f` to it. 
+```
+
+The converse direction is a simple matter of path induction.
+
+```agda
+≡-to-obs-eq : {n m : ℕ} → n ≡ m → obs-eq-ℕ n m
+≡-to-obs-eq {n = n} refl = obs-eq-ℕ-refl {n = n}
+```
+
+Now we can prove versions of the no confusion rules expressed in terms of observational equality rather than the identity type. These proofs are now completely trivial. 
+
+```agda
+obs-eq-ℕ-succ-ℕ-injective : {n m : ℕ} → obs-eq-ℕ (succ-ℕ n) (succ-ℕ m) → obs-eq-ℕ n m
+obs-eq-ℕ-succ-ℕ-injective o = o
+
+obs-eq-ℕ-succ-ℕ-zero-ℕ-disjoint : {n : ℕ} → ¬ (obs-eq-ℕ (succ-ℕ n) zero-ℕ)
+obs-eq-ℕ-succ-ℕ-zero-ℕ-disjoint o = o
+
+obs-eq-ℕ-succ-ℕ-has-no-fixed-point : (n : ℕ) → ¬ (obs-eq-ℕ (succ-ℕ n) n)
+obs-eq-ℕ-succ-ℕ-has-no-fixed-point = ind-ℕ (obs-eq-ℕ-succ-ℕ-zero-ℕ-disjoint {n = zero-ℕ}) (λ _ f → f)
+```
+
+And finally relate these back to the results we actually want stated in terms of the identity type, using our comparison functions `obs-eq-to-≡` and `≡-to-obs-eq`.
+
+```agda
+succ-ℕ-injective : {n m : ℕ} → (succ-ℕ n ≡ succ-ℕ m) → n ≡ m
+succ-ℕ-injective {n = n} {m = m} p = obs-eq-to-≡ (obs-eq-ℕ-succ-ℕ-injective {n = n} {m = m} (≡-to-obs-eq p))
+
+succ-ℕ-zero-ℕ-disjoint : {n : ℕ} → ¬ (succ-ℕ n ≡ zero-ℕ)
+succ-ℕ-zero-ℕ-disjoint {n = n} p = obs-eq-ℕ-succ-ℕ-zero-ℕ-disjoint {n = n} (≡-to-obs-eq p)
+
+succ-ℕ-has-no-fixed-point : {n : ℕ} → ¬ (succ-ℕ n ≡ n)
+succ-ℕ-has-no-fixed-point {n = n} p = obs-eq-ℕ-succ-ℕ-has-no-fixed-point n (≡-to-obs-eq p)
+```
+
+I'd like to again stress here that in Agda we don't actually need to do all this stuff manually as we've done here. The Agda compiler already applies a method like this to derive these no confusion rules and then uses them in its implementation of pattern matching. So we can prove all these results as trivial applications of pattern matching.
 
