@@ -986,3 +986,18 @@ succ-ℕ-has-no-fixed-point {n = n} p = obs-eq-ℕ-succ-ℕ-has-no-fixed-point n
 
 I'd like to again stress here that in Agda we don't actually need to do all this stuff manually as we've done here. The Agda compiler already applies a method like this to derive these no confusion rules and then uses them in its implementation of pattern matching. So we can prove all these results as trivial applications of pattern matching.
 
+Here are the proofs of these results using pattern matching:
+
+```agda
+succ-ℕ-injective' : {n m : ℕ} → (succ-ℕ n ≡ succ-ℕ m) → n ≡ m
+succ-ℕ-injective' refl = refl
+
+succ-ℕ-zero-ℕ-disjoint' : {n : ℕ} → ¬ (succ-ℕ n ≡ zero-ℕ)
+succ-ℕ-zero-ℕ-disjoint' ()
+
+succ-ℕ-has-no-fixed-point' : {n : ℕ} → ¬ (succ-ℕ n ≡ n)
+succ-ℕ-has-no-fixed-point' ()
+```
+
+The pattern `()` is called the [_absurd pattern_](https://agda.readthedocs.io/en/stable/language/function-definitions.html#absurd-patterns). It denotes the fact that Agda has shown that there are no terms matching the input type. Since Agda knows this pattern clause will never be matched it does not require you to give a corresponding definition after this pattern (to the right of an `=`). The easiest way to see if Agda thinks an absurd pattern is applicable is to do a case split (in VS Code) on the parameter for which you suspect this might be the case.
+
