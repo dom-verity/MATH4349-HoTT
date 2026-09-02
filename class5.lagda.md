@@ -309,9 +309,9 @@ Agda's identity type is imported in the preamble of this document, and it defini
 The induction rule for `≡` is often referred to as **path induction** and it takes the following form in Agda.
 
 ```agda
-ind-≡ : {i j : Level}{A : UU i}{a : A}{B : (x : A) → a ≡ x → UU j} → (b : B a refl) → 
-         (x : A) → (p : a ≡ x) → B x p
-ind-≡ b _ refl = b
+ind-≡ : {i j : Level}{A : UU i}{a : A}(B : (x : A) → a ≡ x → UU j) → (b : B a refl) → 
+         {x : A} → (p : a ≡ x) → B x p
+ind-≡ _ b refl = b
 ```
 
 As a rule in "pen and paper" type theory this rule is displayed in the equivalent form:
@@ -421,7 +421,10 @@ As a special case of the `ind-≡` induction rule we have the following **transp
 
 ```agda
 tr : {i j : Level}{A : UU i}{B : A → UU j}{a a' : A} → a ≡ a' → B a → B a'
-tr {a' = a'} p b = ind-≡ b a' p
+tr {B = B} p b = ind-≡ (λ x _ → B x) b p
+
+tr-refl : {i j : Level}{A : UU i}{B : A → UU j}{a : A}{b : B a} → (tr {B = B} refl b ≡ b)
+tr-refl = refl
 ```
 
 #### The action of dependent functions on paths ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.4.2)
@@ -922,7 +925,7 @@ double-ind-ℕ-simple : {i : Level}{A : ℕ → ℕ → UU i} →
     (k : (n m : ℕ) → A n m → A (succ-ℕ n) (succ-ℕ m)) →
     (n m : ℕ) → A n m
 double-ind-ℕ-simple a f g k = 
-    double-ind-ℕ a f (λ n t → g n (t zero-ℕ)) (λ n t m a → k n m (t m))
+    double-ind-ℕ a f (λ n t → g n (t zero-ℕ)) (λ n t m _ → k n m (t m))
 ```
 
 Of course, in day to day use of Agda we don't need to worry about these double induction rules because they arise naturally in terms of pattern matching on successive parameters.
@@ -1002,4 +1005,85 @@ succ-ℕ-has-no-fixed-point' ()
 ```
 
 The pattern `()` is called the [_absurd pattern_](https://agda.readthedocs.io/en/stable/language/function-definitions.html#absurd-patterns). It denotes the fact that Agda has shown that there are no terms matching the input type. Since Agda knows this pattern clause will never be matched it does not require you to give a corresponding definition after this pattern (to the right of an `=`). The easiest way to see if Agda thinks an absurd pattern is applicable is to do a case split (in VS Code) on the parameter for which you suspect this might be the case.
+
+### Proving injectivity for the `cons` constructor of `list`
+
+We've now proved the injectivity of `succ-ℕ` using an observational equality, but we haven't actually addressed how Hayley's proof of that fact can be generalised. You'll recall that she defined the predecessor function `pred-ℕ : ℕ → ℕ` and showed that it was _left inverse_ to `succ-ℕ` which then implies that `succ-ℕ` is injective. One thing preventing us from generalising that proof was that the definition of `pred-ℕ` made an arbitrary decision in regard to how it should act on the other constructor `zero-ℕ`. 
+
+Given a general algebraic data type if we are proving the injectivity of one constructor there may not be a default value to map other constructors to. For example, if we wanted to use this approach to prove that the `cons` constructor of the list data type, which has type `A → list A → list A` was injective we could try and define the following function:
+
+```code
+anti-cons : {i : Level} {A : UU i} → list A → A × list A
+anti-cons (cons a as) = pair a as
+anti-cons nil = ?????
+```
+
+In this definition what should we map the `nil` constructor to? We could try to map it to `pair a nil` but what value `a : A` should we use? This uses the obvious _default_ value `nil : list A` for its second component but there is no reason, in general, to believe that we have access to any particular default element of `A` to use. Maybe we could assume that any type `A` that this argument applies to should have a delegated default value, but that restricts the generality of this result. We could use a return value which adds a default value to `A`, but the canonical solution is to utilise universes and "large elimination". Let's look at using that approach here.
+
+First observe that Hayley's method for discriminating between `zero-ℕ` and `succ-ℕ` is still available to us here. Compare the following with our discussion above.
+
+```agda
+list-discriminator-not-nil : {i : Level} {A : UU i} → list A → UU lzero
+list-discriminator-not-nil = ind-list ∅ (λ _ _ _ → 𝟙)
+
+list-nil-succ-disjoint : {i : Level} {A : UU i} {a : A} {as : list A} → ¬ (cons a as ≡ nil)
+list-nil-succ-disjoint {A = A} p = tr {B = list-discriminator-not-nil {A = A}} p ∗
+```
+
+To show that the `cons` constructor is injective, however, we'll need to make use of a double induction principle for `list`s. We could go through the process above to derive a general double induction rule - but let's just jump directly to its simplified case, which is the one we will use here:
+
+```agda
+double-ind-list : {i j : Level} {A : UU i} {B : list A → list A → UU j} →
+                  (b : B nil nil) → 
+                  (f : (a' : A) → (as' : list A) → B nil as' → B nil (cons a' as')) → 
+                  (g : (a : A) → (as : list A) → B as nil → B (cons a as) nil) →
+                  (k : (a a' : A) → (as as' : list A) → B as as' → B (cons a as) (cons a' as')) →
+                  (as as' : list A) → B as as'
+double-ind-list b f g k nil nil = b
+double-ind-list b f g k nil (cons a' as') = f a' as' (double-ind-list b f g k nil as')
+double-ind-list b f g k (cons a as) nil = g a as (double-ind-list b f g k as nil)
+double-ind-list b f g k (cons a as) (cons a' as') = k a a' as as' (double-ind-list b f g k as as') 
+```
+
+To define a dependent function to unwrap a `cons` we first define a variant of `𝟙` which is _universe polymorphic_. In other words rather than living solely in `UU lzero` it instead lives in the universe `UU i` for each universe level `i : Level`.
+
+```agda
+data ⊤ {i : Level} : UU i where
+    tt : ⊤
+```
+
+Now we can use double list induction to define a type family with parameter `ls : list A` which is definitionally equal to `A × list A` whenever `ls` is of the form `cons a as` and is definitionally equal to `⊤` otherwise. 
+
+```agda
+list-decons-motive : {i : Level} {A : UU i} → list A → UU i
+list-decons-motive {A = A} = ind-list ⊤ (λ a as _ → A × list A)
+```
+
+Finally we define a dependent function which maps each term `cons a as` to the pair `pair a as : A × list A` and maps all other terms to `tt : ⊤`. We also show that this has the desired property of being a left inverse to `cons`.
+
+```agda
+list-decons : {i : Level} {A : UU i} → (as : list A) → list-decons-motive as
+list-decons = ind-list tt (λ a as _ → pair a as)
+
+list-decons-left-inverse-to-cons : {i : Level} {A : UU i} {a : A} {as : list A} → 
+                         list-decons (cons a as) ≡ pair a as 
+list-decons-left-inverse-to-cons = refl
+```
+
+It turns out that this is a little less useful than we might have hoped for. We can try to apply `list-decons` to an identification `p  : cons a as ≡ cons a' as'`, but `list-decons` is a dependent function so we must do that using the dependent application function `apd`. This, unfortunately, returns an identification of type `tr {B = list-decons-motive} p (pair a as) ≡ pair a' as'` - not quite what we were hoping for. So to close that gap we must provide an identification of type `pair a as ≡ tr {B = list-decons-motive} p (pair a as)`; which is easily constructed via pattern matching but a little harder to conjure up using the induction rule for `≡`.
+
+We can, however, take a simpler and more direct route
+
+```agda
+list-cons-injective-motive : {i : Level} {A : UU i} → list A → list A → UU i 
+list-cons-injective-motive {i = i} = 
+    double-ind-list ⊤ (λ _ _ _ → ⊤) (λ _ _ _ → ⊤) (λ a a' as as' _ → (a ≡ a') × (as ≡ as'))
+
+list-cons-injective : {i : Level} {A : UU i} {a a' : A} {as as' : list A} → 
+                      (cons a as ≡ cons a' as') → (a ≡ a') × (as ≡ as')
+list-cons-injective {a = a} {as = as} p = 
+    tr {B = list-cons-injective-motive (cons a as)} p (pair refl refl)
+```
+
+Notice here that we've used the term _motive_ in a couple of the functions defined here. Notably these are both functions that define families of types, that is they return values of type `UU i`. The term **motive** or **elimination motive** refers to a property, predicate or target type that you intend to prove by defining a function into it by induction. In other words, it _motivates_ the construction of a function out of an an inductive type via the application of its elimination rule (induction).
 
