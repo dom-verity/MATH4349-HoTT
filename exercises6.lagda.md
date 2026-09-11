@@ -527,6 +527,8 @@ In this definition the placeholder `_` in the parameter declaration `(x : _)` in
 
 **Note:** in VSCode you can type the homotopy symbol `∼` using the key sequence `\\sim` or `\\~`. It is important to observe that this is actually a different character to the tilde symbol `~` at the top left of your keyboard. 
 
+### Homotopy is an equivalence relation
+
 Definition 9.1.5 of [Rijke](https://arxiv.org/abs/2212.11082) tells us that `∼` is reflexive, symmetric and transitive.
 
 ```agda
@@ -545,7 +547,9 @@ _∙_ = concat-htpy
 
 **Note** we are using the _bullet_ symbol `•`, typed `\\bullet` or simply `\\.`, for concatenation of homotopies. This is not to be confused with the centre dot symbol `·` which we used above as a synonym for concatenation of identifications (paths).
 
-Proposition 9.1.6 of Rijke](https://arxiv.org/abs/2212.11082) proves that `∼` satisfies the groupoid laws:
+### Groupoid laws for homotopies
+
+Proposition 9.1.6 of [Rijke](https://arxiv.org/abs/2212.11082) proves that `∼` satisfies the groupoid laws:
 
 ```agda
 assoc-htpy : {i j : Level}{A : UU i}{B : A → UU j} {f g h k : (x : A) → B x}
@@ -571,4 +575,124 @@ right-inv-htpy {G = G} x = right-inv {p = G x}
 
 We might observe two things here. These theorems all construct homotopies between homotopies (known as higher homotopies) and their proofs are all simply a matter of applying the corresponding theorem for paths _pointwise_.
 
+### Whiskering operations
 
+The term _"whiskering"_ comes from the field of [_2-category theory_](https://en.wikipedia.org/wiki/2-category) and it was originally coined by my good friend and mentor Ross Street. Why whiskering, I hear you ask? Well the pictures on page 106 of [Rijke](https://arxiv.org/abs/2212.11082) help to explain that, since they look a little like faces with whiskers to the left or right.
+
+Here is the Agda presentation of Definition 9.1.7 of [Rijke](https://arxiv.org/abs/2212.11082):
+
+```agda
+left-whisker : {i j k : Level}{A : UU i}{B : UU j}{C : UU k}{f g : A → B} → 
+               (h : B → C) → (f ∼ g) → (h ∘ f ∼ h ∘ g)
+left-whisker h H x = ap h (H x)
+
+right-whisker : {i j k : Level}{A : UU i}{B : UU j}{C : UU k}{g h : B → C} → 
+                (g ∼ h) → (f : A → B) → (g ∘ f ∼ h ∘ f)
+right-whisker H f x = H (f x)
+```
+
+Here the `∘` operation denotes _function composition_ `(g ∘ f) x := g (f x)`, and this symbol is entered using the character sequence `\\circ` or simply `\\o`.
+
+With a little extra work these can be extended to dependently typed functions, but at this stage that process will introduce complications that we should't worry ourselves with just yet.
+
+### Bi-invertible maps (equivalences).
+
+We use the notion of homotopy to define what it means for a map to have a _section_ (right inverse) or a _retraction_ (left inverse) and then define the notion of **homotopy equivalence** (or just _equivalence_ for short) to be a map which has both a section and a retraction.
+
+```agda
+sec : {i j : Level}{A : UU i}{B : UU j}(f : A → B) → UU (i ⊔ j)
+sec {A = A} {B = B} f = Σ g ∈ (B → A) , (f ∘ g ∼ id)
+
+retr : {i j : Level}{A : UU i}{B : UU j}(f : A → B) → UU (i ⊔ j)
+retr {A = A} {B = B} f = Σ h ∈ (B → A) , (h ∘ f ∼ id)
+
+is-equiv : {i j : Level}{A : UU i}{B : UU j}(f : A → B) → UU (i ⊔ j)
+is-equiv f = sec f × retr f 
+```
+
+**Note** The term `id` denotes the _identity_ map `λ x → x` whose type is `{i : Level}{A : UU i} → A → A`.
+
+The term `sec(f)` denotes the type of all sections of `f`, the term `retr(f)` denotes the type of all retractions of `f` and `is-equiv(f) := sec(f) × retr(f)` is then a type inhabited by pairs comprising a section and a retraction of `f`. We say that such information _witnesses_ that `f` is an equivalence.
+
+For example, the identity map `id : A → A` is an equivalence, since it is both its own section and retraction.
+
+```agda 
+id-sec : {i : Level}{A : UU i} → sec (id {A = A})
+id-sec = pair id (λ x → refl)
+
+id-retr : {i : Level}{A : UU i} → retr (id {A = A})
+id-retr = pair id (λ x → refl)
+
+id-equiv : {i : Level}{A : UU i} → is-equiv (id {A = A})
+id-equiv = pair id-sec id-retr
+``` 
+
+### Inverses
+
+We might have expected equivalences to be defined as maps `f : A → B` for which there is a map `f⁻¹ : B → A` in the opposite direction which is **both** a section and a retraction.
+
+```agda
+has-inverse : {i j : Level}{A : UU i}{B : UU j}(f : A → B) → UU (i ⊔ j) 
+has-inverse {A = A} {B = B} f = Σ f⁻¹ ∈ (B → A) , ((f ∘ f⁻¹ ∼ id) × (f⁻¹ ∘ f ∼ id)) 
+```
+
+It is then easy to see that `has-inverse f` implies `is-equiv f`.
+
+```agda
+has-inverse-to-is-equiv : {i j : Level}{A : UU i}{B : UU j}{f : A → B} → has-inverse f → is-equiv f
+has-inverse-to-is-equiv (pair f⁻¹ (pair H K)) = pair (pair f⁻¹ H) (pair f⁻¹ K)
+```
+
+Going in the other direction takes a little more work. We do this in two stages:
+* Show that if `f` has section `g` and retraction `h` the we have a homotopy `g ∼ h`
+* Show that if we have a homotopy `g ∼ h` and `g` is a retraction then `h` is a retraction.
+It follows then that `h` is both a section and a retraction of `f` as required. 
+
+Both of these proofs uses the whiskering operations, along with homotopy concatenation and inverse.
+
+```agda
+equiv-section-retraction-htpy : {i j : Level}{A : UU i}{B : UU j}{f : A → B} → 
+                                (p : is-equiv f) → (let pair (pair g _) (pair h _) = p in g ∼ h)
+equiv-section-retraction-htpy (pair (pair g H) (pair h K)) = 
+    concat-htpy (inv-htpy (right-whisker K g)) (left-whisker h H)
+
+retraction-htpy-stability : {i j : Level}{A : UU i}{B : UU j}{f : A → B}{h : B → A} →
+                            (p : retr f) → (let (pair g _) = p in g ∼ h) → h ∘ f ∼ id
+retraction-htpy-stability {f = f} (pair g H) K = concat-htpy (right-whisker (inv-htpy K) f) H
+```
+
+Now we can use these results to show that the retraction of a equivalence is also a section, and hence prove:
+
+```agda
+is-equiv-to-has-inverse : {i j : Level}{A : UU i}{B : UU j}{f : A → B} → is-equiv f → has-inverse f
+is-equiv-to-has-inverse p@(pair (pair g H) q) = 
+    pair g (pair H (retraction-htpy-stability q (inv-htpy (equiv-section-retraction-htpy p))))
+```
+
+#### Example 9.2.9
+
+Here is the proof that cartesian products distribute over sums.
+
+```agda
+×-distrib-⊎ : {i j k : Level}{A : UU i}{B : UU j}{C : UU k} → A × (B ⊎ C) → (A × B) ⊎ (A × C)
+×-distrib-⊎ (pair a (inl b)) = inl (pair a b)
+×-distrib-⊎ (pair a (inr c)) = inr (pair a c)
+
+×-distrib-⊎' : {i j k : Level}{A : UU i}{B : UU j}{C : UU k} → (A × B) ⊎ (A × C) → A × (B ⊎ C)
+×-distrib-⊎' (inl (pair a b)) = pair a (inl b)
+×-distrib-⊎' (inr (pair a c)) = pair a (inr c)
+
+×-distrib-⊎-left-htpy : {i j k : Level}{A : UU i}{B : UU j}{C : UU k} → 
+                        ×-distrib-⊎' ∘ ×-distrib-⊎ ∼ id {A = A × (B ⊎ C)}
+×-distrib-⊎-left-htpy (pair a (inl b)) = refl
+×-distrib-⊎-left-htpy (pair a (inr c)) = refl
+
+×-distrib-⊎-right-htpy : {i j k : Level}{A : UU i}{B : UU j}{C : UU k} → 
+                         ×-distrib-⊎ ∘ ×-distrib-⊎' ∼ id {A = (A × B) ⊎ (A × C)}
+×-distrib-⊎-right-htpy (inl (pair a b)) = refl
+×-distrib-⊎-right-htpy (inr (pair a c)) = refl
+
+×-distrib-⊎-has-inverse : {i j k : Level}(A : UU i)(B : UU j)(C : UU k) → has-inverse ×-distrib-⊎
+×-distrib-⊎-has-inverse A B C = 
+    pair (×-distrib-⊎' {A = A} {B = B} {C = C}) (pair ×-distrib-⊎-right-htpy ×-distrib-⊎-left-htpy)
+```
