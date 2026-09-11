@@ -94,7 +94,7 @@ data 𝟙 : UU lzero where
     ∗ : 𝟙
 ```
 
-Here the blackboard bold character `𝟙` can be entered by typing "\\b1" and the name `∗` of its constructor is entered by typing "\\ast". 
+Here the blackboard bold character `𝟙` can be entered by typing "\b1" and the name `∗` of its constructor is entered by typing "\ast". 
 
 Following the prescription of section 4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we see that, given a type family `A : (x : 𝟙) → UU i`, the induction rule for `𝟙` constructs a dependent function `(x : 𝟙) → A x` from information that specifies where the constructor `∗ : 𝟙` should be mapped to in `A ∗`.
 
@@ -115,7 +115,7 @@ The empty type inhabits the lowest level universe `UU lzero` has no constructors
 data ∅ : UU lzero where
 ```
 
-Here the empty set symbol `∅` can be typed simply as "\\0". Now our induction rubric tells us that, given a type family `A : ∅ → UU i`, the induction rule for `∅` constructs a dependent function `(x : ∅) → A x` from data which specifies how it acts on constructors; but since there aren't any constructors no such data is required.
+Here the empty set symbol `∅` can be typed simply as "\0". Now our induction rubric tells us that, given a type family `A : ∅ → UU i`, the induction rule for `∅` constructs a dependent function `(x : ∅) → A x` from data which specifies how it acts on constructors; but since there aren't any constructors no such data is required.
 
 ```agda
 ind-∅ : {i : Level}{A : ∅ → UU i} → (x : ∅) → A x
@@ -160,7 +160,7 @@ data _⊎_ {i j : Level}(A : UU i)(B : UU j) : UU (i ⊔ j) where
     inr : B → A ⊎ B 
 ```
 
-You can type the symbol `⊎` in VSCode using the key sequence `\\u+` or `\\uplus`.
+You can type the symbol `⊎` in VSCode using the key sequence `\u+` or `\uplus`.
 
 Our growing intuition for induction rules now tells us that, given a family of types `P : A ⊎ B → UU k`, the induction rule `ind-⊎` constructs a dependent function `(x : A ⊎ B) → P x` from information which specifies where generic elements of the form `inl a` or `inr b` are mapped. For this it suffices to provide a pair of dependent functions `(a : A) → P (inl a)` and `(b : B) → P (inr b)`, hence the following type signature.
 
@@ -291,9 +291,9 @@ In an ironic quirk of fate, the type `A × B` is usually referred to as the _(Ca
 
 **Note:** the operator names appearing in these definitions can be typed in Visual Studio Code using the following key sequences:
 
-* The _sum type (Sigma) operator_ `Σ` is entered using the key sequence "\\Sigma",
-* The _element of operator_ `∈` is entered using the key sequence "\\in", and
-* The _product operator_ `×` is entered using the key sequence "\\times" or "\\x".
+* The _sum type (Sigma) operator_ `Σ` is entered using the key sequence "\Sigma",
+* The _element of operator_ `∈` is entered using the key sequence "\in", and
+* The _product operator_ `×` is entered using the key sequence "\times" or "\x".
 
 As explained in remark 4.6.3 of [Rijke](https://arxiv.org/abs/2212.11082), for each type family `C : Σ x ∈ A , B x → UU k` the induction principle for the Σ-type constructs a dependent function `(p : Σ x ∈ A , B x) → P p` out of a two parameter dependent function `f : (a : A) → (b : P a) → P (pair a b)`, as follows.
 
@@ -309,7 +309,7 @@ ind-Σ f (pair a b) = f a b
 
 This is really where things get interesting. If propositions are types then the equality proposition, which we are familiar with from first order logic, must also ben implemented as a type. In Martin-Löf type theory this is called the _identity type_. At this point we might transition to using Agda's builtin identity type. It has the same definition as the type we've been using, but Agda provides a number of convenience features that make it a little easier to use in big proofs.
 
-Agda's identity type is imported in the preamble of this document, and it definition may be found in the [`Agda.Builtin.Equality`](https://agda.readthedocs.io/en/stable/language/built-ins.html#equality) module. We can now use the infix notation `≡` for the identity type, which is typed using the character sequence "\\equiv" or "\\==", but its constructor is still called `refl`.
+Agda's identity type is imported in the preamble of this document, and it definition may be found in the [`Agda.Builtin.Equality`](https://agda.readthedocs.io/en/stable/language/built-ins.html#equality) module. We can now use the infix notation `≡` for the identity type, which is typed using the character sequence "\equiv" or "\==", but its constructor is still called `refl`.
 
 **Note:** Rijke uses the term **identifications** for the elements of `a ≡ x`, because they witness the various ways of demonstrating that `a` is identified with `x`. We shall also use the term **path** for these elements, which is common usage in the Homotopy Type Theory literature. 
 
@@ -335,7 +335,7 @@ We tend to think of types `A` as being _spaces_ and of `a ≡ x` as being the sp
 
 #### Path concatenation ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.2.1)
 
-We define both the concatenation function and an infix operator synonym `·`, here this _centre dot_ symbol is typed using the key sequence "\\cdot". 
+We define both the concatenation function and an infix operator synonym `·`, here this _centre dot_ symbol is typed using the key sequence "\cdot". 
 
 ```agda
 concat : {i : Level}{A : UU i}{a b c : A} → a ≡ b → b ≡ c → a ≡ c
@@ -525,7 +525,7 @@ f ∼ g = (x : _) → (f x) ≡ (g x)
 
 In this definition the placeholder `_` in the parameter declaration `(x : _)` invites Agda to infer the type of the variable `x`. It can work out it must be `A` from the declared types of `f` and `g`.
 
-**Note:** in VSCode you can type the homotopy symbol `∼` using the key sequence `\\sim` or `\\~`. It is important to observe that this is actually a different character to the tilde symbol `~` at the top left of your keyboard. 
+**Note:** in VSCode you can type the homotopy symbol `∼` using the key sequence `\sim` or `\~`. It is important to observe that this is actually a different character to the tilde symbol `~` at the top left of your keyboard. 
 
 ### Homotopy is an equivalence relation
 
@@ -545,7 +545,7 @@ infixr 20 _∙_
 _∙_ = concat-htpy
 ```
 
-**Note** we are using the _bullet_ symbol `•`, typed `\\bullet` or simply `\\.`, for concatenation of homotopies. This is not to be confused with the centre dot symbol `·` which we used above as a synonym for concatenation of identifications (paths).
+**Note** we are using the _bullet_ symbol `•`, typed `\bullet` or simply `\.`, for concatenation of homotopies. This is not to be confused with the centre dot symbol `·` which we used above as a synonym for concatenation of identifications (paths).
 
 ### Groupoid laws for homotopies
 
@@ -591,7 +591,7 @@ right-whisker : {i j k : Level}{A : UU i}{B : UU j}{C : UU k}{g h : B → C} →
 right-whisker H f x = H (f x)
 ```
 
-Here the `∘` operation denotes _function composition_ `(g ∘ f) x := g (f x)`, and this symbol is entered using the character sequence `\\circ` or simply `\\o`.
+Here the `∘` operation denotes _function composition_ `(g ∘ f) x := g (f x)`, and this symbol is entered using the character sequence `\circ` or simply `\o`.
 
 With a little extra work these can be extended to dependently typed functions, but at this stage that process will introduce complications that we should't worry ourselves with just yet.
 
@@ -695,4 +695,80 @@ Here is the proof that cartesian products distribute over sums.
 ×-distrib-⊎-has-inverse : {i j k : Level}(A : UU i)(B : UU j)(C : UU k) → has-inverse ×-distrib-⊎
 ×-distrib-⊎-has-inverse A B C = 
     pair (×-distrib-⊎' {A = A} {B = B} {C = C}) (pair ×-distrib-⊎-right-htpy ×-distrib-⊎-left-htpy)
+```
+
+### Characterising the identity types of Σ-types
+
+Identity types can be a little _opaque_, their definition in terms of a single constructor `refl` doesn't really provide us with any explicit mechanisms for constructing identifications between elements of the compound data types (Σ, Π, ×, ⊎) we've working with.
+
+The goal in section~9.3 of is to give a more explicit characterisation of identifications between elements in a Σ-type. This is achieved in the following steps:
+
+#### Define a binary relation...
+
+... on the type we are analysing, in this case a Σ-type, which is intended to be _equivalent_ to its identity type.
+
+```agda
+infix 1 _≅_
+
+_≅_ : {i j : Level}{A : UU i}{B : A → UU j} → (Σ x ∈ A , B x) → (Σ x ∈ A , B x) → UU (i ⊔ j)
+_≅_ (pair a b) (pair a' b') = Σ p ∈ (a ≡ a') , (tr p b ≡ b')  
+```
+
+**Note:** the symbol `≅` can be typed using the character sequence `\cong` or more simply `\~=`.
+
+We have seen this relation before, in class I called it the "John Major equality".
+
+#### Show that `≅` is reflexive...
+
+```agda
+refl-≅ : {i j : Level}{A : UU i}{B : A → UU j}{s : Σ x ∈ A , B x} → s ≅ s
+refl-≅ = pair refl refl
+```
+
+#### Use reflexivity of `≅` to define a function from `≡`...
+
+...easy...
+
+```agda
+pair-≅ : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → s ≡ t → s ≅ t
+pair-≅ refl = refl-≅
+```
+
+#### Show that `pair-≅` is an equivalence....
+
+...by first defining a map in the opposite direction. First recall that in exercise 5.3 we defined a map to lift identifications in `A` to identifications in `Σ x ∈ A , B x`.
+
+```agda
+lift : {i j : Level}{A : UU i}{B : A → UU j} (s : Σ x ∈ A , B x) {a : A} (p : pr₁ s ≡ a) → 
+       s ≡ pair a (tr p (pr₂ s))
+lift s p = ind-≡ (λ x q → s ≡ pair x (tr q (pr₂ s))) refl p
+```
+
+So if `(pair p q)` is an element of `s ≅ t` then its first component has type `p : pr₁ s ≡ pr₁ t` and its second component has type `q : tr p (pr₂ s) ≡ pr₂ t`. So we can lift `p` to an identification `lift s p : s ≡ pair (pr₁ t) (tr p (pr₂ s))` and then compose that with the identification that we get by applying `pair (pr₁ t) : B (pr₁ t) → Σ x ∈ A, B x` to `q`.
+
+```agda
+≅-pair : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → s ≅ t → s ≡ t
+≅-pair {A = A} {B = B} {s = s} {t = t} = ind-Σ (λ p q → concat (lift s p) (ap (pair (pr₁ t)) q))
+``` 
+
+This was a little harder, but it becomes pretty much trivial if we use pattern matching instead (which is how Egbert explained this proof).
+
+```agda
+≅-pair' : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → s ≅ t → s ≡ t
+≅-pair' (pair refl refl) = refl
+```
+
+Now we finish up by showing that `pair-≅` is both a section and a retraction of `≅-pair` - to do this we'll allow ourselves the luxury of pattern matching:
+
+```agda
+pair-≅-retraction : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                    (≅-pair ∘ pair-≅ ∼ id {A = s ≡ t})
+pair-≅-retraction refl = refl
+
+pair-≅-section : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                    (pair-≅ ∘ ≅-pair ∼ id {A = s ≅ t})
+pair-≅-section (pair refl refl) = refl
+
+pair-≅-equiv : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → is-equiv (pair-≅ {s = s} {t = t})
+pair-≅-equiv = pair (pair ≅-pair pair-≅-section) (pair ≅-pair pair-≅-retraction)
 ```
