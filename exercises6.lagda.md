@@ -758,7 +758,7 @@ This was a little harder, but it becomes pretty much trivial if we use pattern m
 ≅-pair' (pair refl refl) = refl
 ```
 
-Now we finish up by showing that `pair-≅` is both a section and a retraction of `≅-pair` - to do this we'll allow ourselves the luxury of pattern matching:
+Now we finish up by showing that `pair-≅` is both a section and a retraction of `≅-pair` - to do this we'll allow ourselves the luxury of pattern matching (which is how Rijke implemented the same proofs in the book):
 
 ```agda
 pair-≅-retraction : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
@@ -771,4 +771,24 @@ pair-≅-section (pair refl refl) = refl
 
 pair-≅-equiv : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → is-equiv (pair-≅ {s = s} {t = t})
 pair-≅-equiv = pair (pair ≅-pair pair-≅-section) (pair ≅-pair pair-≅-retraction)
+```
+
+### Recommended Exercises (Chapter 9 of [Rijke](https://arxiv.org/abs/2212.11082))
+
+### Exercise 9.1
+
+Show that the following functions are equivalences, by exhibiting explicit inverses.
+
+```agda
+inv-equiv : {i : Level}{A : UU i}{a b : A} → is-equiv (inv {a = a} {b = b})
+inv-equiv  = {!   !}
+
+left-concat-equiv : {i : Level}{A : UU i}{a b c : A}{p : a ≡ b} → is-equiv (λ (q : b ≡ c) → p · q)
+left-concat-equiv = {!   !}
+
+right-concat-equiv : {i : Level}{A : UU i}{a b c : A}{q : b ≡ c} → is-equiv (λ (p : a ≡ b) → p · q)
+right-concat-equiv = {!   !}
+
+tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}{p : a ≡ b} → is-equiv (tr {B = B} p)
+tr-equiv = {!   !}
 ```
