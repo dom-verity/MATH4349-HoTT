@@ -792,3 +792,22 @@ right-concat-equiv = {!   !}
 tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}{p : a ≡ b} → is-equiv (tr {B = B} p)
 tr-equiv = {!   !}
 ```
+
+### Exercise 9.3
+
+Consider two homotopic functions `f ∼ g`, show that `is-equiv f` if and only if `is-equiv g`.
+
+```agda
+equiv-htpy-stability : {i j : Level}{A : UU i}{B : UU j}{f g : A → B} → (f ∼ g) → is-equiv f → is-equiv g 
+equiv-htpy-stability p q = {!   !}
+```
+
+This gives the "if" direction, explain how we can quickly prove the "only if" direction from it.
+
+Show that the inverses of two homotopic equivalences `e ∼ e'` are themselves homotopic.
+
+```agda
+inverses-homotopic : {i j : Level}{A : UU i}{B : UU j}{e e' : A → B} → (e ∼ e') → 
+                     (f : has-inverse e) → (f' :  has-inverse e') → (pr₁ f ∼ pr₁ f')
+inverses-homotopic p f f' = {!   !}
+```
