@@ -1360,8 +1360,8 @@ transport-of-contr-along-equiv  (pair h s) t =
     equiv-unit-is-contr (right-cancel-equiv unique-to-unit s (contr-is-equiv-unit t))
 
 transport-of-contr-along-equiv' : {i j : Level} {A : UU i} {B : UU j} → A ≃ B → is-contr B → is-contr A
-transport-of-contr-along-equiv' (pair h s) t =
-    equiv-unit-is-contr (compose-equiv unique-to-unit (contr-is-equiv-unit t) s)
+transport-of-contr-along-equiv' (pair h s) u =
+    equiv-unit-is-contr (compose-equiv unique-to-unit (contr-is-equiv-unit u) s)
 ```
 
 ## The fundamental theorem of identity types
@@ -1398,18 +1398,29 @@ tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' uni
         counit {t = pair a c} (pair b q) = ind-≡ (λ q → (φ ∘ φ') (pair b q) ≡ pair b q) refl q
 ```
 
-Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences.
+Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences. Specifically a family of maps is a family of equivalences if and only if its total map is an equivalence.
 
-```comment
+```agda
 tot-of-equiv-family-is-equiv : {i j : Level} {A : UU i} {B C : A → UU j} {f : {x : A} → B x → C x} →
     ((x : A) → is-equiv (f {x = x})) → is-equiv {A = Σ a ∈ A , B a} (tot f)
-tot-of-equiv-family-is-equiv {A = A} {f = f} s = {!   !}
+tot-of-equiv-family-is-equiv {A = A} {B = B} {f = f} s = contr-map-to-equiv contr-tot-f
     where
         contr-f : (x : A) → is-contr-map (f {x = x})
         contr-f x = equiv-to-contr-map (s x)
 
-```
+        contr-tot-f : is-contr-map {A = Σ a ∈ A , B a} (tot f)
+        contr-tot-f (pair a c) = transport-of-contr-along-equiv' tot-fibs (contr-f a c)
 
+equiv-tot-implies-equiv-family : {i j : Level} {A : UU i} {B C : A → UU j} {f : {x : A} → B x → C x} →
+    is-equiv {A = Σ a ∈ A , B a} (tot f) → (x : A) → is-equiv (f {x = x})
+equiv-tot-implies-equiv-family {A = A} {B = B} {f = f} t = contr-map-to-equiv ∘ contr-f
+    where
+        contr-tot-f : is-contr-map {A = Σ a ∈ A , B a} (tot f)
+        contr-tot-f = equiv-to-contr-map t
+
+        contr-f : (x : A) → is-contr-map (f {x = x})
+        contr-f x c = transport-of-contr-along-equiv tot-fibs (contr-tot-f (pair x c))
+```
 
 ### Embeddings
 
