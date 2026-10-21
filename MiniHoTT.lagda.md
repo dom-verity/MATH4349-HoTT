@@ -915,12 +915,18 @@ tr-equiv = {!   !}
 
 Consider two homotopic functions `f ∼ g`, show that `is-equiv f` if and only if `is-equiv g`.
 
-```comment
+```agda
 equiv-htpy-stability : {i j : Level}{A : UU i}{B : UU j}{f g : A → B} → (f ∼ g) → is-equiv f → is-equiv g 
-equiv-htpy-stability p q = {!   !}
+equiv-htpy-stability K (pair (pair h G) (pair k H)) = 
+    pair (pair h (right-whisker (inv-htpy K) h ∙ G)) (pair k (left-whisker k (inv-htpy K) ∙ H))
 ```
 
 This gives the "if" direction, explain how we can quickly prove the "only if" direction from it.
+
+```agda
+equiv-htpy-stability' : {i j : Level}{A : UU i}{B : UU j}{f g : A → B} → (f ∼ g) → is-equiv g → is-equiv f 
+equiv-htpy-stability' = equiv-htpy-stability ∘ inv-htpy 
+```
 
 Show that the inverses of two homotopic equivalences `e ∼ e'` are themselves homotopic.
 
@@ -1306,16 +1312,56 @@ has-inverse-implies-is-coh-invertible {A = A} {e = e} (pair e' (pair G H)) = pai
               (G (e x))
 ```
 
-This deserves to be cleaned up, but let's press on. Now combining earlier lemmas with this coherence theorem we get.
+This deserves to be cleaned up, but let's press on. Combining earlier lemmas with this coherence theorem we finally get.
 
 ```agda
-is-equiv-to-is-contr-map : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-equiv f → is-contr-map f
-is-equiv-to-is-contr-map = coh-inverse-implies-contr-map ∘ has-inverse-implies-is-coh-invertible ∘ 
-                                is-equiv-to-has-inverse
+equiv-to-contr-map : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-equiv f → is-contr-map f
+equiv-to-contr-map = coh-inverse-implies-contr-map ∘ has-inverse-implies-is-coh-invertible ∘ 
+                        is-equiv-to-has-inverse
 
-is-contr-map-to-is-equiv : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-contr-map f → is-equiv f
-is-contr-map-to-is-equiv s = let (pair f' (pair G (pair H _))) = contr-map-has-coh-inverse s 
-                             in pair (pair f' G) (pair f' H)
+contr-map-to-equiv : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-contr-map f → is-equiv f
+contr-map-to-equiv s = let (pair f' (pair G (pair H _))) = contr-map-has-coh-inverse s 
+                       in pair (pair f' G) (pair f' H)
+```
+
+### Equivalences and contractible types
+
+If two types are connected by an equivalence then one is contractible if and only if the other one is. Following our class discussion we prove this my applying the 2-or-3 property to a characterisation of contractible types as those that are equivalent to `𝟙`. First some facts about maps into `𝟙`.
+
+```agda
+! : {i : Level} {A : UU i} → A → 𝟙
+! _ = ∗
+
+unique-to-contr : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} → is-contr B → f ∼ g 
+unique-to-contr {f = f} {g = g} (pair _ H) x = inv (H (f x)) · H (g x)
+
+unique-to-unit : {i : Level} {A : UU i} {f g : A → 𝟙} → f ∼ g 
+unique-to-unit = unique-to-contr unit-is-contr
+
+pt : {i : Level} {A : UU i} → A → 𝟙 → A
+pt = const
+```
+
+And now we prove that a type is contractible if and only if its unique map to the unit type is an equivalence.
+
+```agda
+contr-is-equiv-unit : {i : Level} {A : UU i} → is-contr A → is-equiv (! {A = A})
+contr-is-equiv-unit (pair a H) = pair (pair (pt a) unique-to-unit) (pair (pt a) H)
+
+equiv-unit-is-contr : {i : Level} {A : UU i} → is-equiv (! {A = A}) → is-contr A
+equiv-unit-is-contr (pair _ (pair h H)) = pair (h ∗) H
+```
+
+Now we can use Exercise 9.1, the 2-of-3 property, to prove the desired stability result for contractability.
+
+```agda
+transport-of-contr-along-equiv : {i j : Level} {A : UU i} {B : UU j} → A ≃ B → is-contr A → is-contr B 
+transport-of-contr-along-equiv  (pair h s) t = 
+    equiv-unit-is-contr (right-cancel-equiv unique-to-unit s (contr-is-equiv-unit t))
+
+transport-of-contr-along-equiv' : {i j : Level} {A : UU i} {B : UU j} → A ≃ B → is-contr B → is-contr A
+transport-of-contr-along-equiv' (pair h s) t =
+    equiv-unit-is-contr (compose-equiv unique-to-unit (contr-is-equiv-unit t) s)
 ```
 
 ## The fundamental theorem of identity types
@@ -1351,6 +1397,19 @@ tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' uni
         counit : {t : Σ a ∈ A , C a} → φ ∘ (φ' {t = t}) ∼ id
         counit {t = pair a c} (pair b q) = ind-≡ (λ q → (φ ∘ φ') (pair b q) ≡ pair b q) refl q
 ```
+
+Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences.
+
+```comment
+tot-of-equiv-family-is-equiv : {i j : Level} {A : UU i} {B C : A → UU j} {f : {x : A} → B x → C x} →
+    ((x : A) → is-equiv (f {x = x})) → is-equiv {A = Σ a ∈ A , B a} (tot f)
+tot-of-equiv-family-is-equiv {A = A} {f = f} s = {!   !}
+    where
+        contr-f : (x : A) → is-contr-map (f {x = x})
+        contr-f x = equiv-to-contr-map (s x)
+
+```
+
 
 ### Embeddings
 
