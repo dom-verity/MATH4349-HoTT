@@ -42,6 +42,16 @@ We have now standardised on using Agda's builtin identity type, denoted `≡`. W
 * use infix symbols `+` and `*` for the algebraic operations of addition and multiplication, these are given by the same definitions as before (using induction in the first variable), and
 * reuse a whole bunch of useful algebraic laws and identities that have been defined there - by importing `Data.Nat.Properties`. 
 
+Later on I'll also use the equational reasoning support provided by the standard library.
+
+```agda
+open import Relation.Binary.PropositionalEquality 
+    using (_≡_; refl; sym; trans; cong)
+open import Relation.Binary.PropositionalEquality.Properties 
+    using (module ≡-Reasoning)
+open ≡-Reasoning
+```
+
 # Code
 
 ## Standard definitions
@@ -436,6 +446,14 @@ tr-refl : {i j : Level}{A : UU i}{B : A → UU j}{a : A}{b : B a} → (tr {B = B
 tr-refl = refl
 ```
 
+We also have an important _naturality law_ for transport relative to a family of functions. This states that transportation and the application of the family of functions _commute_ in a suitable sense. 
+
+```agda
+tr-naturality : {i j : Level} {A : UU i} {B C : A → UU j} {f : {a : A} → B a → C a} 
+                {a a' : A} {p : a ≡ a'} {b : B a} → f {a = a'} (tr p b) ≡ tr p (f b)
+tr-naturality {f = f} {p = p} {b = b} = ind-≡ (λ {a'} p → f (tr p b) ≡ tr p (f b)) refl p
+```
+
 #### The action of dependent functions on paths ([Rijke](https://arxiv.org/abs/2212.11082) definition 5.4.2)
 
 Suppose that `f : (a : A) → B a` is a dependent function, where `B` is a type that depends on the type `A`, then at first blush it doesn't seem to make much sense to apply `f` to a path `p : a ≡ a'`, since `f a` and `f a'` lie in (possibly) distinct types `B a` and `B a'`. We can, however, use the transport function to give some sense to the application of `f` to paths.
@@ -465,15 +483,15 @@ It is important to note that while the space `Σ x ∈ A , a ≡ x` of all paths
 
 #### Dual path induction and double inversion of paths
 
-Sometimes it is also convenient to use the following variant of the path induction rule in which the endpoints of paths are pinned at `a` rather than their start points. Our proof of this makes use of the fact that path inversion is an _involutive_ function.
+Sometimes it is also convenient to use the following variant of the path induction rule in which the endpoints of paths are pinned at their endpoints rather than their start points. Our proof of this makes use of the fact that path inversion is an _involutive_ function.
 
 ```agda
-inv-involutive : {i : Level} {A : UU i} {x y : A} (p : x ≡ y) → inv (inv p) ≡ p
-inv-involutive = ind-≡ (λ {y} p → inv (inv p) ≡ p) refl
+inv-involutive : {i : Level} {A : UU i} {x y : A} {p : x ≡ y} → inv (inv p) ≡ p
+inv-involutive {p = p} = ind-≡ (λ {y} p → inv (inv p) ≡ p) refl p
 
 ind-≡' : {i j : Level}{A : UU i}{a : A}(B : {x : A} → x ≡ a → UU j) → (b : B refl) → 
          {x : A} → (p : x ≡ a) → B p
-ind-≡' B b p = tr {B = B} (inv-involutive p) (ind-≡ (B ∘ inv) b (inv p))
+ind-≡' B b p = tr {B = B} inv-involutive (ind-≡ (B ∘ inv) b (inv p))
 ```
 
 ### Laws of addition on `ℕ`
@@ -682,14 +700,32 @@ is-equiv-to-has-inverse p@(pair (pair g H) q) =
     pair g (pair H (retraction-htpy-stability q (inv-htpy (equiv-section-retraction-htpy p))))
 ```
 
+**Note** In this argument we need to use the whole parameter `p` on the right-hand side **and** we need to "unpack" it into its components `g`, `H` and `q` to use those as well. To do that we use an `@`-pattern, which is described in the [as-pattern](https://agda.readthedocs.io/en/stable/language/function-definitions.html#as-patterns) section of the Agda manual.
+
+To simplify our notation a little later we introduce a types of all equivalences and isomorphisms between two types:
+
+```agda
+infix 1 _≃_
+
+_≃_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
+_≃_ A B = Σ f ∈ (A → B) , is-equiv f
+
+infix 1 _≃'_
+
+_≃'_ : {i j : Level}(A : UU i)(B : UU j) → UU (i ⊔ j)
+_≃'_ A B = Σ f ∈ (A → B) , has-inverse f
+```
+
+**Note** You can type the symbol `≃` using the character sequence `\simeq` or, more simply, `\~-`.
+
 ### Homotopies are natural (in the categorical sense)
 
 Homotopies `H : f ∼ g` enjoy the following _naturality_ property, which should be familiar to anyone who has been introduced to the basics of category theory.
 
 ```agda
-nat-htpy : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} (H : f ∼ g) {x y : A} (p : x ≡ y) →
+htpy-naturality : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} (H : f ∼ g) {x y : A} (p : x ≡ y) →
            ap f p · H y ≡ H x · ap g p
-nat-htpy {f = f} {g = g} H {x = x} = ind-≡ (λ {y} p → ap f p · H y ≡ H x · ap g p) (inv right-unit) 
+htpy-naturality {f = f} {g = g} H {x = x} = ind-≡ (λ {y} p → ap f p · H y ≡ H x · ap g p) (inv right-unit) 
 ```
 
 #### Example 9.2.9
@@ -754,7 +790,7 @@ refl-≅ = pair refl refl
 
 ```agda
 pair-≅ : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → s ≡ t → s ≅ t
-pair-≅ refl = refl-≅
+pair-≅ {s = s} = ind-≡ (λ {t} p → s ≅ t) refl-≅
 ```
 
 #### Show that `pair-≅` is an equivalence....
@@ -771,7 +807,7 @@ So if `(pair p q)` is an element of `s ≅ t` then its first component has type 
 
 ```agda
 ≅-pair : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → s ≅ t → s ≡ t
-≅-pair {A = A} {B = B} {s = s} {t = t} = ind-Σ (λ p q → concat (lift s p) (ap (pair (pr₁ t)) q))
+≅-pair {s = s} {t = t} = ind-Σ (λ p q → concat (lift s p) (ap (pair (pr₁ t)) q))
 ``` 
 
 This was a little harder, but it becomes pretty much trivial if we use pattern matching instead (which is how Egbert explained this proof).
@@ -781,19 +817,46 @@ This was a little harder, but it becomes pretty much trivial if we use pattern m
 ≅-pair' (pair refl refl) = refl
 ```
 
-Now we finish up by showing that `pair-≅` is both a section and a retraction of `≅-pair` - to do this we'll allow ourselves the luxury of pattern matching (which is how Rijke implemented the same proofs in the book):
+Now we finish up by showing that `pair-≅` is both a section and a retraction of `≅-pair`:
 
 ```agda
 pair-≅-retraction : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
-                    (≅-pair ∘ pair-≅ ∼ id {A = s ≡ t})
-pair-≅-retraction refl = refl
+                     (≅-pair ∘ pair-≅ ∼ id {A = s ≡ t})
+pair-≅-retraction = ind-≡ (λ p → (≅-pair ∘ pair-≅) p ≡ p) refl 
 
 pair-≅-section : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
-                    (pair-≅ ∘ ≅-pair ∼ id {A = s ≅ t})
-pair-≅-section (pair refl refl) = refl
+                  (pair-≅ ∘ ≅-pair ∼ id {A = s ≅ t})
+pair-≅-section {A = A} {B = B} {s = pair a b} {t = pair a' b'} (pair p q) = outer p q
+    where
+        inner : {b' : B a} (q : tr {A = A} {B = B} refl b ≡ b') → 
+                ((pair-≅ {s = pair a b}) ∘ ≅-pair) (pair refl q) ≡ pair refl q
+        inner = ind-≡ (λ {b'} q → ((pair-≅ {s = pair a b}) ∘ ≅-pair) (pair refl q) ≡ pair refl q) refl
 
-pair-≅-equiv : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → is-equiv (pair-≅ {s = s} {t = t})
+        outer : {a' : A} (p : a ≡ a') {b' : B a'} (q : tr p b ≡ b') → 
+                (pair-≅ ∘ ≅-pair) (pair p q) ≡ pair p q
+        outer = 
+            ind-≡ (λ {a'} p →
+                    {b' : B a'} (q : tr p b ≡ b') → (pair-≅ ∘ ≅-pair) (pair p q) ≡ pair p q) inner 
+
+pair-≅-equiv : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                is-equiv (pair-≅ {s = s} {t = t})
 pair-≅-equiv = pair (pair ≅-pair pair-≅-section) (pair ≅-pair pair-≅-retraction)
+```
+
+Here again, if we allow ourselves the luxury of pattern matching (which is how Rijke implemented the same proofs in the book) things get a little easier:
+
+```agda
+pair-≅-retraction' : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                     (≅-pair' ∘ pair-≅ ∼ id {A = s ≡ t})
+pair-≅-retraction' refl = refl
+
+pair-≅-section' : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                  (pair-≅ ∘ ≅-pair' ∼ id {A = s ≅ t})
+pair-≅-section' (pair refl refl) = refl
+
+pair-≅-equiv' : {i j : Level}{A : UU i}{B : A → UU j}{s t : Σ x ∈ A , B x} → 
+                is-equiv (pair-≅ {s = s} {t = t})
+pair-≅-equiv' = pair (pair ≅-pair' pair-≅-section') (pair ≅-pair' pair-≅-retraction')
 ```
 
 ### Exercises (Chapter 9 of [Rijke](https://arxiv.org/abs/2212.11082))
@@ -806,7 +869,7 @@ Show that the following functions are equivalences, by exhibiting explicit inver
 
 ```agda
 inv-equiv : {i : Level}{A : UU i}{a b : A} → is-equiv (inv {a = a} {b = b})
-inv-equiv  = pair (pair inv inv-involutive) (pair inv inv-involutive)
+inv-equiv  = pair (pair inv (λ p → inv-involutive {p = p})) (pair inv (λ p → inv-involutive {p = p}))
 
 left-concat-equiv : {i : Level}{A : UU i}{a b c : A}{p : a ≡ b} → is-equiv (λ (q : b ≡ c) → p · q)
 left-concat-equiv {a = a} {b = b} {c = c} {p = p} = 
@@ -867,6 +930,75 @@ inverses-homotopic : {i j : Level}{A : UU i}{B : UU j}{e e' : A → B} → (e �
 inverses-homotopic p f f' = {!   !}
 ```
 
+### Exercise 9.4 - the 2-of-3 property for equivalences
+
+We start with a commuting triangle
+
+```agda
+module _ {i j k : Level} {A : UU i} {B : UU j} {C : UU k} {f : A → C} {g : B → C} {h : A → B}
+         (H : f ∼ g ∘ h) where
+```
+
+**Note** here I've used the [anonymous module feature](https://agda.readthedocs.io/en/stable/language/module-system.html#anonymous-modules), introduced by `module _ ... where`, which allows us to collect common parameter declarations together and give them once rather than repeating them in each of the (indented) definitions in the body of that module. In general modules are a way of structuring the way that names are used in an Agda program, they collect together related definitions possessing common parameters and allow us to control how the names of those functions are used in the program beyond the scope of that module. Module systems are a vitally important part of any programming language that targets the development of large and complex programs. You should consult the section of the Agda manual on its [module system](https://agda.readthedocs.io/en/stable/language/module-system.html#module-system) to find out more about its particular variant of this feature.
+
+I should also point out that the contents of a module are determined by indenting them an extra level. So the next few blocks of Agda code are indented to ensure that they are "scoped" by the module declaration above.
+
+In part (a) we prove that if `h` has a section then `f` has a section if and only if `g` has a section.
+
+```agda
+    sec-of-h-commutes-with-f-and-g : {s : B → A} → h ∘ s ∼ id → g ∼ f ∘ s 
+    sec-of-h-commutes-with-f-and-g {s = s} G = inv-htpy (right-whisker H s ∙ left-whisker g G)
+
+    sec-h-and-sec-f-implies-sec-g : sec h → sec f → sec g 
+    sec-h-and-sec-f-implies-sec-g (pair s G) (pair t L) = 
+        pair (h ∘ t) (right-whisker (inv-htpy H) t ∙ L)
+
+    sec-h-and-sec-g-implies-sec-f : sec h → sec g → sec f
+    sec-h-and-sec-g-implies-sec-f (pair s G) (pair u M) = 
+        pair (s ∘ u) (inv-htpy (right-whisker (sec-of-h-commutes-with-f-and-g G) u) ∙ M)
+```
+
+In part (b) we prove the "dual" result that if `g` has a retraction then `f` has a retraction if and only if `h` has a retraction.
+
+```agda
+    retr-of-g-commutes-with-f-and-h : {r : C → B} → r ∘ g ∼ id → h ∼ r ∘ f 
+    retr-of-g-commutes-with-f-and-h {r = r} K = inv-htpy (left-whisker r H ∙ right-whisker K h)
+
+    retr-g-and-retr-f-implies-retr-h : retr g → retr f → retr h 
+    retr-g-and-retr-f-implies-retr-h (pair r K) (pair t L) = 
+        pair (t ∘ g) (left-whisker t (inv-htpy H) ∙ L)
+
+    retr-g-and-retr-h-implies-retr-f : retr g → retr h → retr f 
+    retr-g-and-retr-h-implies-retr-f (pair r K) (pair s M) =
+        pair (s ∘ r) (left-whisker s (inv-htpy (retr-of-g-commutes-with-f-and-h {r = r} K)) ∙ M)
+```
+
+Finally in part (c) we prove the 2-of-3 property for equivalences, as three separate lemmas.
+
+```agda
+    compose-equiv : is-equiv g → is-equiv h → is-equiv f
+    compose-equiv (pair u v) (pair u' v') = 
+        pair (sec-h-and-sec-g-implies-sec-f u' u) (retr-g-and-retr-h-implies-retr-f v v')
+
+    right-cancel-equiv : is-equiv h → is-equiv f → is-equiv g
+    right-cancel-equiv (pair u@(pair s G) _) (pair u' (pair r' K')) =
+        pair (sec-h-and-sec-f-implies-sec-g u u') (pair (h ∘ r') L)
+        where
+            L : h ∘ r' ∘ g ∼ id
+            L = left-whisker (h ∘ r') (sec-of-h-commutes-with-f-and-g G) ∙ 
+                left-whisker h (right-whisker K' s) ∙ G
+
+    left-cancel-equiv : is-equiv g → is-equiv f → is-equiv h 
+    left-cancel-equiv (pair _ v@(pair r K)) (pair (pair s' G') v') =
+        pair (pair (s' ∘ g) M) (retr-g-and-retr-f-implies-retr-h v v')
+        where
+            M : h ∘ s' ∘ g ∼ id
+            M = (right-whisker (retr-of-g-commutes-with-f-and-h {r = r} K) (s' ∘ g)) ∙ 
+                left-whisker r (right-whisker G' g) ∙ K
+```
+
+**Note** here that in the right cancellation law we actually use the section `s` of the function `h` while proving that if `r'` is a retraction of `f` then `h ∘ r'` is a retraction of `g`. That means that we use an `@`-pattern to unpack `s` and `G` from the proof `u` that `h` has a section while still making `u` available to pass as a parameter to `sec-h-and-sec-f-implies-sec-g`. A dual comment applies to the proof of the left cancellation law.
+
 ## Contractible types
 
 A type `A` is _contractible_ if there is some point `a : A` and a family of identifications of `a ≡ x` for all `x : A`.
@@ -876,7 +1008,7 @@ is-contr : {i : Level} → UU i → UU i
 is-contr A = Σ a ∈ A , ((y : A) → a ≡ y)
 ```
 
-In this case, the "fixed" point `a` is called a _centre of contraction.
+In this case, the "fixed" point `a` is called a _centre of contraction_.
 
 ```agda
 -- The centre of a contractible type
@@ -1024,9 +1156,7 @@ module _ {i j : Level} {A : UU i} {B : UU j} {f : A → B} {b : B} where
     ≡-fib-right-inv {s = s} = ind-≡ (λ p → (≡-fib-to-≡ ∘ ≡-to-≡-fib) p ≡ p) refl
 ```
 
-**Note** here I've used the [anonymous module feature](https://agda.readthedocs.io/en/stable/language/module-system.html#anonymous-modules), introduced by `module _ ... where`, which allows us to collect common parameter declarations together and give them once rather than repeating them in each of the (indented) definitions in the body of that module. In general modules are a way of structuring the way that names are used in an Agda program, they collect together related definitions possessing common parameters and allow us to control how the names of those functions are used in the program beyond the scope of that module. Module systems are a vitally important part of any programming language that targets the development of large and complex programs. You should consult the section of the Agda manual on its [module system](https://agda.readthedocs.io/en/stable/language/module-system.html#module-system) to find out more about its particular variant of this feature.
-
-Also observe that I've implemented the equivalence between `≡-fib` and the identity type on `fib f b` using the raw induction rule `ind-≡` rather than resorting to pattern matching on identifications. At his stage, I don't feel entirely comfortable about relying on pattern matching because we haven't quite manually proved all of the results about `≡` upon which pattern matching itself relies. But once we emerge from chapter 11 we will be able to go to town and rely solely on pattern matching because by then we will have established all of the rules it is built from.
+Observe that I've implemented the equivalence between `≡-fib` and the identity type on `fib f b` using the raw induction rule `ind-≡` rather than resorting to pattern matching on identifications. At his stage, I don't feel entirely comfortable about relying on pattern matching because we haven't quite manually proved all of the results about `≡` upon which pattern matching itself relies. But once we emerge from chapter 11 we will be able to go to town and rely solely on pattern matching because by then we will have established all of the rules it is built from.
 
 The main utility of pattern matching in these cases is that the Agda pattern matching knows how to construct the _motive_ type parameter of `≡-ind` from data in the context of the patterns being matched. On the other hand, my manual proofs above require us to laboriously give those (sometimes quite complex) type expressions explicitly. As a demonstration of this, here are the same proofs using pattern matching.
 
@@ -1103,62 +1233,158 @@ Both of these proofs rely upon building elements of the observational equality `
 
 Of course, we might hope that all maps with plain inverses are contractible, to which end we would like to show that if `f` has an inverse then it has a coherent inverse. Specifically we will show that if `G : f ∘ f⁻¹ ∼ id` and `H : f⁻¹ ∘ f ∼ id` then we can always construct another homotopy `H' : f⁻¹ ∘ f ∼ id` such that `G` and `H'` together satisfy the coherence property `(right-whisker G f) ∼ (left-whisker f H')`.
 
-One way to explain extra coherence property of a coherent inverse is to consider _transposition_ operators for a pair of functions `u : A → B` and `f : B → A`. When they exist these are functions relating identifications `p : y ≡ u x` and `q : f y ≡ x`.
+The argument here is a little opaque, but you can glean some intuition for what is going on by consulting the n-cat lab page on [adjoint equivalences](https://ncatlab.org/nlab/show/adjoint+equivalence). It describes this construction in terms of some nice looking _string diagrams_.
+
+First we should fill in some basic facts about the functoriality of path composition that we missed earlier. I'll allow myself the luxury of pattern matching - these are all routine proofs with raw path induction but time is short...
 
 ```agda
-module _ {i j : Level} {A : UU i} {B : UU j} {u : A → B} {f : B → A} where
-    transpose-left : UU (i ⊔ j)
-    transpose-left = (x : A) (y : B) → y ≡ u x → f y ≡ x
+module _ {i : Level} {A : UU i} {a a' a'' : A} where
+    left-concat-ap : (p : a ≡ a') {q q' : a' ≡ a''} (s : q ≡ q') → (p · q ≡ p · q')
+    left-concat-ap p s = ap (λ q → p · q) s
 
-    transpose-right : UU (i ⊔ j)
-    transpose-right = (x : A) (y : B) → f y ≡ x → y ≡ u x
+    right-concat-ap : {p p' : a ≡ a'} (r : p ≡ p') (q : a' ≡ a'') → (p · q ≡ p' · q)
+    right-concat-ap r q = ap (λ p → p · q) r
+
+    left-concat-ap-inv : (p : a ≡ a') {q q' : a' ≡ a''} (s : q ≡ q') → 
+        left-concat-ap p (inv s) ≡ inv (left-concat-ap p s)
+    left-concat-ap-inv _ refl = refl 
+
+    right-concat-ap-inv : {p p' : a ≡ a'} (r : p ≡ p') (q : a' ≡ a'') →
+        right-concat-ap (inv r) q ≡ inv (right-concat-ap r q)
+    right-concat-ap-inv refl _ = refl 
+
+    left-concat-ap-concat : (p : a ≡ a') {q q' q'' : a' ≡ a''} (s : q ≡ q') (s' : q' ≡ q'') →
+        left-concat-ap p (s · s') ≡ (left-concat-ap p s) · (left-concat-ap p s')
+    left-concat-ap-concat _ refl _ = refl
+
+    right-concat-ap-concat : {p p' p'' : a ≡ a'} (r : p ≡ p') (r' : p' ≡ p'') (q : a' ≡ a'') →
+        right-concat-ap (r · r') q ≡ (right-concat-ap r q) · (right-concat-ap r' q)
+    right-concat-ap-concat refl _ _ = refl
+
+    right-concat-cancel : {p p' : a ≡ a'} (q : a' ≡ a'') → (p · q ≡ p' · q) → p ≡ p'
+    right-concat-cancel refl r = (inv right-unit) · r · right-unit
+
+    left-concat-cancel : (p : a ≡ a') {q q' : a' ≡ a''} → (p · q ≡ p · q') → q ≡ q'
+    left-concat-cancel refl s = s 
 ```
 
-_Left transposition_ operators are intimately related to homotopies `G : f ∘ u ∼ id`, which are often called _counits_, in the sense that the following functions translate between these structures.
+To break up this proof a little we first use naturality of homotopies to prove the following lemma (Definition 10.4.4).
 
 ```agda
-    transpose-left-to-counit : transpose-left → f ∘ u ∼ id
-    transpose-left-to-counit t x = t x (u x) refl
-
-    counit-to-transpose-left : f ∘ u ∼ id → transpose-left
-    counit-to-transpose-left G x y p = ap f p · G x
+htpy-to-id-nat : {i : Level} {A : UU i} {f : A → A} (H : f ∼ id) {x : A} → ap f (H x) ≡ H (f x)
+htpy-to-id-nat {f = f} H {x = x} = 
+    right-concat-cancel (H x) (htpy-naturality H (H x) · left-concat-ap (H (f x)) ap-id) 
 ```
 
-These functions are mutually inverse in the following sense. 
+Now we get the following, slightly horrible, computation to establish Theorem 10.4.5.
 
 ```agda
-    transpose-left-to-counit-sect :  (G : f ∘ u ∼ id) → 
-        transpose-left-to-counit (counit-to-transpose-left G) ∼ G
-    transpose-left-to-counit-sect G x = left-unit
+has-inverse-implies-is-coh-invertible : 
+    {i j : Level} {A : UU i} {B : UU j} {e : A → B} → has-inverse e → is-coh-invertible e
+has-inverse-implies-is-coh-invertible {A = A} {e = e} (pair e' (pair G H)) = pair e' (pair G (pair H' (inv-htpy K)))
+    where
+        H' : e' ∘ e ∼ id
+        H' = left-whisker (e' ∘ e) (inv-htpy H) ∙ left-whisker e' (right-whisker G e) ∙ H
 
-    transpose-left-to-counit-retr : (t : transpose-left) (x : A) (y : B) →
-        counit-to-transpose-left (transpose-left-to-counit t) x y ∼ t x y
-    transpose-left-to-counit-retr t x _ = 
-        ind-≡' (λ {y} p → concat (ap f p) (t x (u x) refl) ≡ t x y p) left-unit
+        lem1 : left-whisker e (left-whisker e' (right-whisker G e)) ∼
+               right-whisker (right-whisker G e) (e' ∘ e)
+        lem1 x = (inv ap-comp) · (htpy-to-id-nat G)
+
+        lem2 : (right-whisker (right-whisker G e) (e' ∘ e)) ∙ (left-whisker e H) ∼
+               (left-whisker (e ∘ e' ∘ e) H) ∙ (right-whisker G e)
+        lem2 x = inv (htpy-naturality (right-whisker G e) (H x))
+
+        lem3 : left-whisker e (left-whisker e' (right-whisker G e) ∙ H) ∼ 
+               (left-whisker (e ∘ e' ∘ e) H) ∙ (right-whisker G e)
+        lem3 x = ap-concat {q = H x} · right-concat-ap (lem1 x) (ap e (H x)) · (lem2 x)
+               
+        K : (left-whisker e H') ∼ (right-whisker G e)
+        K x = ap-concat {p = ap (e' ∘ e) (inv (H x))} · left-concat-ap _ (lem3 x) · 
+              (inv (assoc {p = ap e (ap (e' ∘ e) (inv (H x)))} {q = ap (e ∘ e' ∘ e) (H x)})) · 
+              right-concat-ap (right-concat-ap (inv (ap-comp {f = e' ∘ e} {g = e})) (ap (e ∘ e' ∘ e) (H x)) ·  
+              (inv (ap-concat {f = e ∘ e' ∘ e} {q = (H x)})) · ap (ap (e ∘ e' ∘ e)) (left-inv {p = H x})) 
+              (G (e x))
 ```
 
-Dually, _right transposition_ operators are intimately related to homotopies `H : id ∼ u ∘ f`, which are often called _units_, by the following translation functions.
+This deserves to be cleaned up, but let's press on. Now combining earlier lemmas with this coherence theorem we get.
 
 ```agda
-    transpose-right-to-unit : transpose-right → id ∼ u ∘ f
-    transpose-right-to-unit s y = s (f y) y refl
+is-equiv-to-is-contr-map : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-equiv f → is-contr-map f
+is-equiv-to-is-contr-map = coh-inverse-implies-contr-map ∘ has-inverse-implies-is-coh-invertible ∘ 
+                                is-equiv-to-has-inverse
 
-    unit-to-transpose-right : id ∼ u ∘ f → transpose-right
-    unit-to-transpose-right H x y q = H y · ap u q
+is-contr-map-to-is-equiv : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → is-contr-map f → is-equiv f
+is-contr-map-to-is-equiv s = let (pair f' (pair G (pair H _))) = contr-map-has-coh-inverse s 
+                             in pair (pair f' G) (pair f' H)
 ```
 
-These again are mutual inverses in the manifest sense.
+## The fundamental theorem of identity types
+
+This theorem characterises those families of types that are (pointwise) equivalent to the identity types on a type `A` and provides us with a (propositional) induction principle for such types.
+
+### Families of equivalences
+
+Now we define the _total map_ associated with a family of maps...
 
 ```agda
-    transpose-right-to-unit-sect : (H : id ∼ u ∘ f) → 
-        transpose-right-to-unit (unit-to-transpose-right H) ∼ H
-    transpose-right-to-unit-sect H y = right-unit
-
-    transpose-right-to-unit-retr : (s : transpose-right) (x : A) (y : B) →
-        unit-to-transpose-right (transpose-right-to-unit s) x y ∼ s x y
-    transpose-right-to-unit-retr t x y = 
-        ind-≡ (λ {x} q → concat (t (f y) y refl) (ap u q) ≡ t x y q) right-unit
+tot : {i j : Level} {A : UU i} {B C : A → UU j} (f : {a : A} → B a → C a) → 
+      Σ a ∈ A , B a → Σ a ∈ A , C a
+tot f (pair a b) = pair a (f b)
 ```
 
-**Note** we might observe that the defining expressions of `counit-to-transpose-left` and `unit-to-transpose-right` are closely related to the commuting triangle that we puzzled over in exercise 11.2.
+...and relate its fibres to the fibres of family members (Lemma 11.1.2 of [Rijke](https://arxiv.org/abs/2212.11082)).
 
+```agda
+tot-fibs : {i j : Level} {A : UU i} {B C : A → UU j} {f : {a : A} → B a → C a} {t : Σ a ∈ A , C a} →
+           fib (tot f) t ≃ fib f (pr₂ t)
+tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' unit))
+    where
+        φ : {t : Σ a ∈ A , C a} → fib (tot f) t → fib (f {a = pr₁ t}) (pr₂ t) 
+        φ (pair (pair a b) p) = ind-≡ (λ {t} p → fib f (pr₂ t)) (pair b refl) p
+
+        φ' : {t : Σ a ∈ A , C a} → fib (f {a = pr₁ t}) (pr₂ t) → fib (tot f) t
+        φ' {t = pair a c} (pair b q) = ind-≡ (λ {c} q → fib (tot f) (pair a c)) (pair (pair a b) refl) q 
+
+        unit : {t : Σ a ∈ A , C a} → φ' ∘ (φ {t = t}) ∼ id
+        unit (pair (pair a b) p) = ind-≡ (λ p → (φ' ∘ φ) (pair (pair a b) p) ≡ pair (pair a b) p) refl p
+              
+        counit : {t : Σ a ∈ A , C a} → φ ∘ (φ' {t = t}) ∼ id
+        counit {t = pair a c} (pair b q) = ind-≡ (λ q → (φ ∘ φ') (pair b q) ≡ pair b q) refl q
+```
+
+### Embeddings
+
+In Definition 11.4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we are introduced to _embeddings_, which are maps whose actions on identity types are equivalences.
+
+```agda
+is-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → UU (i ⊔ j)
+is-emb {A = A} f = {a a' : A} → is-equiv (ap f {a = a} {a' = a'})
+```
+
+Now Theorem 11.4.2 tells us that if a map is an equivalence then it is an embedding. We'll prove this directly, by first showing that if `f` has an inverse then it is an embedding.
+
+```comment
+concat-left-ap : {i : Level} {A : UU i} {a a' a'' : A} {q q' : a' ≡ a''} → 
+                 (p : a ≡ a') → q ≡ q' → p · q ≡ p · q'
+concat-left-ap p r = ap (λ q → p · q) r
+                 
+concat-right-ap : {i : Level} {A : UU i} {a a' a'' : A} {p p' : a ≡ a'} → 
+                 p ≡ p' → (q : a' ≡ a'') → p · q ≡ p' · q
+concat-right-ap s q = ap (λ p → p · q) s
+
+has-inverse-implies-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → has-inverse f → is-emb f
+has-inverse-implies-emb {A = A} f (pair g (pair sec-htpy retr-htpy)) {a = a} = 
+    pair (pair φ' counit) (pair φ' unit)
+    where
+        φ : {a' : A} → a ≡ a' → f a ≡ f a'
+        φ = ap f
+
+        φ' : {a' : A} → f a ≡ f a' → a ≡ a'
+        φ' {a' = a'} q = (inv (retr-htpy a)) · (ap g q) · (retr-htpy a')
+
+        unit : {a' : A} → φ' ∘ (φ {a' = a'}) ∼ id
+        unit = ind-≡ (λ p → (φ' ∘ φ) p ≡ p) (left-inv {p = retr-htpy a})
+
+        counit : {a' : A} → φ ∘ (φ' {a' = a'}) ∼ id
+        counit = {!  !}
+```
