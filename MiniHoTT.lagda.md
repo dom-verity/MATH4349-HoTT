@@ -1364,6 +1364,15 @@ transport-of-contr-along-equiv' (pair h s) u =
     equiv-unit-is-contr (compose-equiv unique-to-unit (contr-is-equiv-unit u) s)
 ```
 
+Of course, the same line of reasoning also tells us that all maps between contractible spaces are equivalences.
+
+```agda
+map-of-contr-is-equiv : {i j : Level} {A : UU i} {B : UU j} {h : A → B} → 
+    is-contr A → is-contr B → is-equiv h
+map-of-contr-is-equiv s t = 
+    left-cancel-equiv unique-to-unit (contr-is-equiv-unit t) (contr-is-equiv-unit s)  
+```
+
 ## The fundamental theorem of identity types
 
 This theorem characterises those families of types that are (pointwise) equivalent to the identity types on a type `A` and provides us with a (propositional) induction principle for such types.
@@ -1373,7 +1382,7 @@ This theorem characterises those families of types that are (pointwise) equivale
 Now we define the _total map_ associated with a family of maps...
 
 ```agda
-tot : {i j : Level} {A : UU i} {B C : A → UU j} (f : {a : A} → B a → C a) → 
+tot : {i j k : Level} {A : UU i} {B : A → UU j} {C : A → UU k} (f : {a : A} → B a → C a) → 
       Σ a ∈ A , B a → Σ a ∈ A , C a
 tot f (pair a b) = pair a (f b)
 ```
@@ -1381,8 +1390,8 @@ tot f (pair a b) = pair a (f b)
 ...and relate its fibres to the fibres of family members (Lemma 11.1.2 of [Rijke](https://arxiv.org/abs/2212.11082)).
 
 ```agda
-tot-fibs : {i j : Level} {A : UU i} {B C : A → UU j} {f : {a : A} → B a → C a} {t : Σ a ∈ A , C a} →
-           fib (tot f) t ≃ fib f (pr₂ t)
+tot-fibs : {i j k : Level} {A : UU i} {B : A → UU j} {C : A → UU k} {f : {a : A} → B a → C a} 
+           {t : Σ a ∈ A , C a} → fib (tot f) t ≃ fib f (pr₂ t)
 tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' unit))
     where
         φ : {t : Σ a ∈ A , C a} → fib (tot f) t → fib (f {a = pr₁ t}) (pr₂ t) 
@@ -1398,11 +1407,11 @@ tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' uni
         counit {t = pair a c} (pair b q) = ind-≡ (λ q → (φ ∘ φ') (pair b q) ≡ pair b q) refl q
 ```
 
-Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences. Specifically a family of maps is a family of equivalences if and only if its total map is an equivalence.
+Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences. Specifically a family of maps is a family of equivalences if and only if it's total map is an equivalence.
 
 ```agda
-tot-of-equiv-family-is-equiv : {i j : Level} {A : UU i} {B C : A → UU j} {f : {x : A} → B x → C x} →
-    ((x : A) → is-equiv (f {x = x})) → is-equiv {A = Σ a ∈ A , B a} (tot f)
+tot-of-equiv-family-is-equiv : {i j k : Level} {A : UU i} {B : A → UU j} {C : A → UU k} 
+    {f : {x : A} → B x → C x} → ((x : A) → is-equiv (f {x = x})) → is-equiv {A = Σ a ∈ A , B a} (tot f)
 tot-of-equiv-family-is-equiv {A = A} {B = B} {f = f} s = contr-map-to-equiv contr-tot-f
     where
         contr-f : (x : A) → is-contr-map (f {x = x})
@@ -1411,8 +1420,8 @@ tot-of-equiv-family-is-equiv {A = A} {B = B} {f = f} s = contr-map-to-equiv cont
         contr-tot-f : is-contr-map {A = Σ a ∈ A , B a} (tot f)
         contr-tot-f (pair a c) = transport-of-contr-along-equiv' tot-fibs (contr-f a c)
 
-equiv-tot-implies-equiv-family : {i j : Level} {A : UU i} {B C : A → UU j} {f : {x : A} → B x → C x} →
-    is-equiv {A = Σ a ∈ A , B a} (tot f) → (x : A) → is-equiv (f {x = x})
+equiv-tot-implies-equiv-family : {i j k : Level} {A : UU i} {B : A → UU j} {C : A → UU k} 
+    {f : {x : A} → B x → C x} → is-equiv {A = Σ a ∈ A , B a} (tot f) → (x : A) → is-equiv (f {x = x})
 equiv-tot-implies-equiv-family {A = A} {B = B} {f = f} t = contr-map-to-equiv ∘ contr-f
     where
         contr-tot-f : is-contr-map {A = Σ a ∈ A , B a} (tot f)
@@ -1421,6 +1430,26 @@ equiv-tot-implies-equiv-family {A = A} {B = B} {f = f} t = contr-map-to-equiv �
         contr-f : (x : A) → is-contr-map (f {x = x})
         contr-f x c = transport-of-contr-along-equiv tot-fibs (contr-tot-f (pair x c))
 ```
+
+### Identity systems and the fundamental theorem
+
+Given a type family `B : A → UU j` we would like to know when it is familiarly equivalent to the identity type family `λ x → a ≡ x : A → UU i` for some fixed `a : A`. For example, this is important when we are trying to find observational variants of identity types, such as the John Major equality that observationally captures identities between elements of a sum type.
+
+Notice, however, that the path space `path-space a ≔ Σ x ∈ A , a ≡ x` is also the total map associated with the family `λ x → a ≡ x` and we already know that it is contractible. So we can combine our characterisation of families of equivalences as being those families whose total map is an equivalence with the stability results we've just derived for contractible spaces to prove the following result characterising those type families that are equivalent to `λ x → a ≡ x`:
+
+```agda
+fundamental-≡-one : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} → 
+                    is-contr(Σ x ∈ A , B x) → (x : A) → is-equiv (f {x = x})
+fundamental-≡-one {a = a} {f = f} s = 
+    equiv-tot-implies-equiv-family {f = f} (map-of-contr-is-equiv (path-space-is-contr a) s)
+
+fundamental-≡-two : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} → 
+                    ((x : A) → is-equiv (f {x = x})) → is-contr(Σ x ∈ A , B x)
+fundamental-≡-two {a = a} {f = f} t = 
+    transport-of-contr-along-equiv (pair (tot f) (tot-of-equiv-family-is-equiv t)) (path-space-is-contr a)
+```
+
+We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't hope for this induction principle to be **definitional**, but we can at least ask for some kind of propositional induction principle. These are expressed using the   
 
 ### Embeddings
 
