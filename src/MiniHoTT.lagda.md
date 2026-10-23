@@ -1449,7 +1449,7 @@ fundamental-≡-two {a = a} {f = f} t =
     transport-of-contr-along-equiv (pair (tot f) (tot-of-equiv-family-is-equiv t)) (path-space-is-contr a)
 ```
 
-We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't hope for this induction principle to be **definitional**, but we can at least ask for some kind of propositional induction principle. These are expressed using the   
+We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't ask for this induction principle to be **definitional**, but we can at least ask for some kind of propositionally valid instance. These are expressed using _identity systems_ which are defined to be types dependent on `A` and `B` for which a certain projection  
 
 ### Embeddings
 
