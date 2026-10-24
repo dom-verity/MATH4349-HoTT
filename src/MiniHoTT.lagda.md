@@ -654,7 +654,7 @@ Here the `∘` operation denotes _function composition_ `(g ∘ f) x := g (f x)`
 
 With a little extra work these can be extended to dependently typed functions, but at this stage that process will introduce complications that we shouldn't worry ourselves with just yet.
 
-The dual right-whiskering laws describe successive pre-composition and preservation of homotopy concatenation. The composition law is definitional.
+The dual right whiskering laws describe successive pre-composition and preservation of homotopy concatenation. The composition law is definitional.
 
 ```agda
 right-whisker-comp-htpy : {i j k l : Level} {Z : UU i} {A : UU j} {X : UU k} {Y : UU l}
@@ -1418,13 +1418,11 @@ has-inverse-implies-is-coh-invertible {A = A} {B = B} {e = e} (pair e' (pair G H
         inverse-removal : (e ∘ ((e' ∘ e) ∘ (e' ∘ e))) ∼ (e ∘ (e' ∘ e))
         inverse-removal = left-whisker (e ∘ (e' ∘ e)) H
 
-        section-whiskering : (e ∘ e' ∘ e) ∼ e
-        section-whiskering = right-whisker G e
-
         K : (left-whisker e H') ∼ (right-whisker G e)
         K = left-whisker-concat-htpy (left-whisker (e' ∘ e) (inv-htpy H)) (left-whisker e' (right-whisker G e) ∙ H) e ∙
             right-concat-htpy {H = inverse-insertion} whiskered-coherence-square ∙
-            inv-htpy (assoc-htpy {G = inverse-insertion} {H = inverse-removal} {K = section-whiskering}) ∙
+            inv-htpy (assoc-htpy {G = inverse-insertion} {H = inverse-removal}) ∙
+            left-concat-htpy (left-whisker-inv-cancel-htpy (e' ∘ e) e H) ∙ left-unit-htpy
 ```
 
 This deserves to be cleaned up, but let's press on. Combining earlier lemmas with this coherence theorem we finally get.
