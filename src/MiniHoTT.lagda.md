@@ -279,7 +279,7 @@ record dsum {i j : Level} (A : UU i) (B : A → UU j) : UU (i ⊔ j) where
         pr₁ : A
         pr₂ : B pr₁
 
-open dsum
+open dsum public 
 ```
 
 We can now introduce two pieces of handy notation, first a [_Syntax Declaration_](https://agda.readthedocs.io/en/stable/language/syntax-declarations.html) which allows us to use `Σ` notation for dependent sums in a manner close to the way they are often annotated on paper.
@@ -1015,19 +1015,19 @@ tr-comp {a'' = a''} {p = p} {p' = p'} =
 And we have the following function which maps identifications of functions to homotopies
 
 ```agda
-ident-to-htpy : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} → (f ≡ g) → (f ∼ g)
-ident-to-htpy {f = f} = ind-≡ (λ {g} _ → f ∼ g) refl-htpy 
+htpy-eq : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} → (f ≡ g) → (f ∼ g)
+htpy-eq {f = f} = ind-≡ (λ {g} _ → f ∼ g) refl-htpy 
 ```
-l
+
 Using these we get the following proof that transport of structure along and identification is an equivalence.
 
 ```agda
 tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}{p : a ≡ b} → is-equiv (tr {B = B} p)
 tr-equiv {p = p} = 
     pair (pair (tr (inv p)) 
-            (inv-htpy (tr-comp {p = inv p}) ∙ ident-to-htpy (ap tr (left-inv {p = p})))) 
+            (inv-htpy (tr-comp {p = inv p}) ∙ htpy-eq (ap tr (left-inv {p = p})))) 
             (pair (tr (inv p)) 
-                (inv-htpy (tr-comp {p' = inv p}) ∙ ident-to-htpy (ap tr (right-inv {p = p}))))
+                (inv-htpy (tr-comp {p' = inv p}) ∙ htpy-eq (ap tr (right-inv {p = p}))))
 ```
 
 ### Exercise 9.3
@@ -1586,6 +1586,41 @@ fundamental-≡-two {a = a} {f = f} t =
 ```
 
 We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't ask for this induction principle to be **definitional**, but we can at least ask for some kind of propositionally valid instance. These are expressed using _identity systems_ which are defined to be types dependent on `A` and `B` for which a certain projection
+
+### Characterising the identity type on fibres
+
+As an application of the fundamental theorem we provide a characterisation of the identity types on the fibres of a map. First we give our candidate observational equality ...
+
+```agda
+module _ {i j : Level} {A : UU i} {B : UU j} {f : A → B} where
+    fib-≡ : {b : B} → (s t : fib f b) → UU (i ⊔ j)
+    fib-≡ (pair a p) (pair a' p') = Σ q ∈ (a ≡ a') , (ap f q · p' ≡ p)
+```
+... and define its comparison with the identity type ...
+
+```agda
+    fib-≡-compare : {b : B} {s t : fib f b} → (s ≡ t) → fib-≡ s t
+    fib-≡-compare {s = s} = ind-≡ (λ {t} p → fib-≡ s t) (pair refl refl)
+```
+
+... which we show is an equivalence by demonstrating that for all `s : fib f b` the total space of `fib-≡ s ∶ fib f b → UU (i ⊔ j)` is contractible.
+
+```agda
+    fib-≡-tot-contr : {b : B} {s : fib f b} → is-contr (Σ t ∈ fib f b , fib-≡ s t)
+    fib-≡-tot-contr {b = b} {s = s} = pair (pair s (pair refl refl)) H
+        where
+            H : (u : Σ t ∈ fib f b , fib-≡ s t) → pair s (pair refl refl) ≡ u
+            H (pair (pair a r) (pair q p)) = outer q p
+                where
+                    inner : {r : f (pr₁ s) ≡ b} (p : r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair (pr₁ s) r) (pair refl p)
+                    inner = ind-≡' (λ {r} p → pair s (pair refl refl) ≡ pair (pair (pr₁ s) r) (pair refl p)) refl 
+
+                    outer : {a : A} (q : pr₁ s ≡ a) {r : f a ≡ b} (p : ap f q · r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair a r) (pair q p)
+                    outer = ind-≡ (λ {a} q → {r : f a ≡ b} (p : ap f q · r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair a r) (pair q p)) inner
+
+    fib-≡-compare-equiv : {b : B} {s t : fib f b} → is-equiv (fib-≡-compare {s = s} {t = t})
+    fib-≡-compare-equiv {s = s} {t = t} = fundamental-≡-one {f = fib-≡-compare {s = s}} fib-≡-tot-contr t 
+```
 
 ### Embeddings
 
