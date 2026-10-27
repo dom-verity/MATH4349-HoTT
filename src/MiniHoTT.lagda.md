@@ -1003,9 +1003,31 @@ right-concat-equiv {a = a} {b = b} {c = c} {q = q} =
             (assoc {q = q} {r = inv q}) · ap (λ s → p · s) (right-inv {p = q}) · right-unit
 ```
 
-```comment
+To prove the last part we start by filling in the functoriality law for transport which we omitted earlier.
+
+```agda
+tr-comp : {i j : Level} {A : UU i} {B : A → UU j} {a a' a'' : A} {p : a ≡ a'} {p' : a' ≡ a''} → 
+    tr {B = B} (p · p') ∼ (tr p') ∘ (tr p)
+tr-comp {a'' = a''} {p = p} {p' = p'} = 
+    (ind-≡ (λ {a'} p → ((p' : a' ≡ a'') → (tr (p · p') ∼ (tr p') ∘ (tr p)))) (λ _ _ → refl) p) p'
+```
+
+And we have the following function which maps identifications of functions to homotopies
+
+```agda
+ident-to-htpy : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} → (f ≡ g) → (f ∼ g)
+ident-to-htpy {f = f} = ind-≡ (λ {g} _ → f ∼ g) refl-htpy 
+```
+l
+Using these we get the following proof that transport of structure along and identification is an equivalence.
+
+```agda
 tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}{p : a ≡ b} → is-equiv (tr {B = B} p)
-tr-equiv = {!   !}
+tr-equiv {p = p} = 
+    pair (pair (tr (inv p)) 
+            (inv-htpy (tr-comp {p = inv p}) ∙ ident-to-htpy (ap tr (left-inv {p = p})))) 
+            (pair (tr (inv p)) 
+                (inv-htpy (tr-comp {p' = inv p}) ∙ ident-to-htpy (ap tr (right-inv {p = p}))))
 ```
 
 ### Exercise 9.3
@@ -1025,12 +1047,13 @@ equiv-htpy-stability' : {i j : Level}{A : UU i}{B : UU j}{f g : A → B} → (f 
 equiv-htpy-stability' = equiv-htpy-stability ∘ inv-htpy
 ```
 
-Show that the inverses of two homotopic equivalences `e ∼ e'` are themselves homotopic.
+Show that the inverses of two homotopic equivalences `f ∼ g` are themselves homotopic.
 
-```comment
-inverses-homotopic : {i j : Level}{A : UU i}{B : UU j}{e e' : A → B} → (e ∼ e') →
-                     (f : has-inverse e) → (f' :  has-inverse e') → (pr₁ f ∼ pr₁ f')
-inverses-homotopic p f f' = {!   !}
+```agda
+inverses-homotopic : {i j : Level}{A : UU i}{B : UU j}{f g : A → B} → (f ∼ g) →
+                     (s : has-inverse f) → (t :  has-inverse g) → (pr₁ s ∼ pr₁ t)
+inverses-homotopic G (pair f' (pair H _)) (pair g' (pair _ K)) = 
+    (right-whisker (inv-htpy K) f') ∙ left-whisker g' (right-whisker (inv-htpy G) f') ∙ left-whisker g' H
 ```
 
 ### Exercise 9.4 - the 2-of-3 property for equivalences
