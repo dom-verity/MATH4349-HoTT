@@ -1587,41 +1587,6 @@ fundamental-≡-two {a = a} {f = f} t =
 
 We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't ask for this induction principle to be **definitional**, but we can at least ask for some kind of propositionally valid instance. These are expressed using _identity systems_ which are defined to be types dependent on `A` and `B` for which a certain projection
 
-### Characterising the identity type on fibres
-
-As an application of the fundamental theorem we provide a characterisation of the identity types on the fibres of a map. First we give our candidate observational equality ...
-
-```agda
-module _ {i j : Level} {A : UU i} {B : UU j} {f : A → B} where
-    fib-≡ : {b : B} → (s t : fib f b) → UU (i ⊔ j)
-    fib-≡ (pair a p) (pair a' p') = Σ q ∈ (a ≡ a') , (ap f q · p' ≡ p)
-```
-... and define its comparison with the identity type ...
-
-```agda
-    fib-≡-compare : {b : B} {s t : fib f b} → (s ≡ t) → fib-≡ s t
-    fib-≡-compare {s = s} = ind-≡ (λ {t} p → fib-≡ s t) (pair refl refl)
-```
-
-... which we show is an equivalence by demonstrating that for all `s : fib f b` the total space of `fib-≡ s ∶ fib f b → UU (i ⊔ j)` is contractible.
-
-```agda
-    fib-≡-tot-contr : {b : B} {s : fib f b} → is-contr (Σ t ∈ fib f b , fib-≡ s t)
-    fib-≡-tot-contr {b = b} {s = s} = pair (pair s (pair refl refl)) H
-        where
-            H : (u : Σ t ∈ fib f b , fib-≡ s t) → pair s (pair refl refl) ≡ u
-            H (pair (pair a r) (pair q p)) = outer q p
-                where
-                    inner : {r : f (pr₁ s) ≡ b} (p : r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair (pr₁ s) r) (pair refl p)
-                    inner = ind-≡' (λ {r} p → pair s (pair refl refl) ≡ pair (pair (pr₁ s) r) (pair refl p)) refl 
-
-                    outer : {a : A} (q : pr₁ s ≡ a) {r : f a ≡ b} (p : ap f q · r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair a r) (pair q p)
-                    outer = ind-≡ (λ {a} q → {r : f a ≡ b} (p : ap f q · r ≡ pr₂ s) → pair s (pair refl refl) ≡ pair (pair a r) (pair q p)) inner
-
-    fib-≡-compare-equiv : {b : B} {s t : fib f b} → is-equiv (fib-≡-compare {s = s} {t = t})
-    fib-≡-compare-equiv {s = s} {t = t} = fundamental-≡-one {f = fib-≡-compare {s = s}} fib-≡-tot-contr t 
-```
-
 ### Embeddings
 
 In Definition 11.4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we are introduced to _embeddings_, which are maps whose actions on identity types are equivalences.
@@ -1631,30 +1596,4 @@ is-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → UU (i ⊔ j)
 is-emb {A = A} f = {a a' : A} → is-equiv (ap f {a = a} {a' = a'})
 ```
 
-Now Theorem 11.4.2 tells us that if a map is an equivalence then it is an embedding. We'll prove this directly, by first showing that if `f` has an inverse then it is an embedding.
-
-```comment
-concat-left-ap : {i : Level} {A : UU i} {a a' a'' : A} {q q' : a' ≡ a''} →
-                 (p : a ≡ a') → q ≡ q' → p · q ≡ p · q'
-concat-left-ap p r = ap (λ q → p · q) r
-
-concat-right-ap : {i : Level} {A : UU i} {a a' a'' : A} {p p' : a ≡ a'} →
-                 p ≡ p' → (q : a' ≡ a'') → p · q ≡ p' · q
-concat-right-ap s q = ap (λ p → p · q) s
-
-has-inverse-implies-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → has-inverse f → is-emb f
-has-inverse-implies-emb {A = A} f (pair g (pair sec-htpy retr-htpy)) {a = a} =
-    pair (pair φ' counit) (pair φ' unit)
-    where
-        φ : {a' : A} → a ≡ a' → f a ≡ f a'
-        φ = ap f
-
-        φ' : {a' : A} → f a ≡ f a' → a ≡ a'
-        φ' {a' = a'} q = (inv (retr-htpy a)) · (ap g q) · (retr-htpy a')
-
-        unit : {a' : A} → φ' ∘ (φ {a' = a'}) ∼ id
-        unit = ind-≡ (λ p → (φ' ∘ φ) p ≡ p) (left-inv {p = retr-htpy a})
-
-        counit : {a' : A} → φ ∘ (φ' {a' = a'}) ∼ id
-        counit = {!  !}
-```
+Now Theorem 11.4.2 tells us that if a map is an equivalence then it is an embedding, which we prove using the fundamental theorem.
