@@ -1015,15 +1015,15 @@ tr-comp {a'' = a''} {p = p} {p' = p'} =
 And we have the following function which maps identifications of functions to homotopies
 
 ```agda
-htpy-eq : {i j : Level} {A : UU i} {B : UU j} {f g : A → B} → (f ≡ g) → (f ∼ g)
+htpy-eq : {i j : Level} {A : UU i} {B : A → UU j} {f g : (x : A) → B x} → (f ≡ g) → (f ∼ g)
 htpy-eq {f = f} = ind-≡ (λ {g} _ → f ∼ g) refl-htpy 
 ```
 
 Using these we get the following proof that transport of structure along and identification is an equivalence.
 
 ```agda
-tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}{p : a ≡ b} → is-equiv (tr {B = B} p)
-tr-equiv {p = p} = 
+tr-equiv : {i j : Level}{A : UU i}{B : A → UU j}{a b : A}(p : a ≡ b) → is-equiv (tr {B = B} p)
+tr-equiv p = 
     pair (pair (tr (inv p)) 
             (inv-htpy (tr-comp {p = inv p}) ∙ htpy-eq (ap tr (left-inv {p = p})))) 
             (pair (tr (inv p)) 
@@ -1145,8 +1145,8 @@ centre-of-contr (pair x _) = x
 If a type `A` is contractible then **all** pairs of its points are identified via a path between them
 
 ```agda
-all_points_are_centres : {i : Level}{A : UU i} → is-contr A → (u v : A) → u ≡ v
-all_points_are_centres (pair a ct) u v = inv (ct u) · (ct v)
+all-points-are-centres : {i : Level}{A : UU i} → is-contr A → (u v : A) → u ≡ v
+all-points-are-centres (pair a ct) u v = inv (ct u) · (ct v)
 ```
 
 The identity on a contractible type is homotopic to the constant endomorphism at its centre of contraction.
@@ -1172,14 +1172,14 @@ The space of paths anchored at one end is contractible.
 
 ```agda
 -- The space of paths anchored at one end at a specified point
-path_space : {i : Level}{A : UU i} → (a : A) → UU i
-path_space {A = A} a = Σ x ∈ A , (a ≡ x)
+path-space : {i : Level}{A : UU i} → (a : A) → UU i
+path-space {A = A} a = Σ x ∈ A , (a ≡ x)
 
 -- Path spaces are contractible
-path-space-is-contr : {i : Level}{A : UU i} → (a : A) → is-contr (path_space a)
+path-space-is-contr : {i : Level}{A : UU i} → (a : A) → is-contr (path-space a)
 path-space-is-contr {A = A} a = pair (pair a refl) ctr
     where
-        ctr : (pt : path_space a) → (pair a refl) ≡ pt
+        ctr : (pt : path-space a) → (pair a refl) ≡ pt
         ctr (pair y refl) = refl
 ```
 
@@ -1302,6 +1302,17 @@ module _ {i j : Level} {A : UU i} {B : UU j} {f : A → B} {b : B} where
     ≡-fib-right-inv' refl = refl
 ```
 
+On unpacking this observational equality on fibres we get the following handy construction principle for proofs of map contractability. 
+
+```agda
+mk-contr-map : {i j : Level} {A : UU i} {B : UU j} {f : A → B} {l : B → A} (H : f ∘ l ∼ id) → 
+               ({b : B} {a : A} (r : f a ≡ b) → Σ q ∈ (l b ≡ a) , (H b ≡ ap f q · r)) → is-contr-map f
+mk-contr-map {l = l} H K b = pair (pair (l b) (H b)) L
+    where
+        L : const (pair (l b) (H b)) ∼ id
+        L (pair _ r) = ≡-fib-to-≡ (K r)
+```
+
 ### Contractible maps and coherent invertiblity
 
 Our primary interest in contractible maps arises from the crucially important fact that a map is contractible if and only if it is an equivalence. First we introduce a _coherent_ version of invertiblity, which asks for the homotopies witnessing that `f` has an inverse `g` are themselves related by a **higher homotopy**.
@@ -1351,7 +1362,7 @@ coh-inverse-implies-contr-map {A = A} {B = B} {f = f} (pair g (pair G (pair H K)
                 ind-≡ (λ {b} h → ≡-fib (s b) (pair a h)) (pair (H a) (K a · inv right-unit)) h)
 ```
 
-Both of these proofs rely upon building elements of the observational equality `≡-fib s t` which we convert to identifications `s ≡ t` using our translation function `≡-fib-to-≡`. The first essentially just unpacks the data encapsulated in a proof of `is-contra-map f` and uses it to populate a proof of `is-coh-invertible f` (possibly after translation by `≡-fib-to-≡`). In the converse direction, we must use path induction to extend the data built into the extra coherence homotopy to give a homotopy that witnesses the contractiblity of the spaces `fib f b`, of which it is the special case at the point `pair a refl : fib f (f a)`.
+Both of these proofs rely upon building elements of the observational equality `≡-fib s t` which we convert to identifications `s ≡ t` using our translation function `≡-fib-to-≡`. The first essentially just unpacks the data encapsulated in a proof of `is-contra-map f` and uses it to populate a proof of `is-coh-invertible f` (possibly after translation by `≡-fib-to-≡`). In the converse direction, we must use path induction to extend the data built into the extra coherence homotopy to give a homotopy that witnesses the contractability of the spaces `fib f b`, of which it is the special case at the point `pair a refl : fib f (f a)`.
 
 **Notice** here that when we apply path induction to reduce the second component of an element `(pair a h)` of `fib f b` to `refl` we end up considering elements of the type `fib f (f a)` for some `a : A`. This in turn means that we must _generalise_ the definitions of `s` and `L` in the `where` clause of `coh-inverse-implies-contr-map` by giving them an extra parameter `b : B` to "unpin" that end of our identifications. Had we used pattern matching against the pattern `pair a refl` instead this generalisation step would have been done auto-magically for us my Agda's pattern matching compiler.
 
@@ -1509,6 +1520,33 @@ map-of-contr-is-equiv s t =
     left-cancel-equiv unique-to-unit (contr-is-equiv-unit t) (contr-is-equiv-unit s)
 ```
 
+We can also generalise our contractability transport results slightly:
+
+```agda
+retr-of-contr-is-equiv : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → retr f → is-contr B → is-equiv f 
+retr-of-contr-is-equiv {f = f} p@(pair f' _) (pair _ H) = pair (pair f' λ b → inv (H _) · (H _)) p
+
+retr-of-contr-is-contr : {i j : Level} {A : UU i} {B : UU j} {f : A → B} → retr f → is-contr B → is-contr A
+retr-of-contr-is-contr {f = f} p q = transport-of-contr-along-equiv' (pair f (retr-of-contr-is-equiv p q)) q
+```
+
+### Contractible families
+
+It is sometimes useful to know that is a type `A` is contractible and a type family `B : A → UU j` has some `B a` contractible then the total space `Σ x ∈ A , B x` of the family is contractible. 
+
+```agda
+tot-of-contr-fam-is-contr : {i j : Level} {A : UU i} {B : A → UU j} (s : is-contr A) (t : is-contr (B (centre-of-contr s))) → is-contr (Σ x ∈ A , B x)
+tot-of-contr-fam-is-contr {A = A} {B = B} s@(pair a G) t@(pair b H) = pair (pair a b) K
+    where
+        ctr : (x : A) → is-contr (B x)
+        ctr x = transport-of-contr-along-equiv (pair (tr (G x)) (tr-equiv (G x))) t
+
+        K : (u : Σ x ∈ A , B x) → (pair a b) ≡ u
+        K u@(pair a' b') = ≅-pair (pair (G a') (all-points-are-centres (ctr a') (tr (G a') b) b'))
+```
+
+The converse result is not true, for example if `B x ≔ a ≡ x` then its total space is contractible but neither `A` nor any identity type `a ≡ x` need be contractible. 
+
 ## The fundamental theorem of identity types
 
 This theorem characterises those families of types that are (pointwise) equivalent to the identity types on a type `A` and provides us with a (propositional) induction principle for such types.
@@ -1543,7 +1581,7 @@ tot-fibs {A = A} {C = C} {f = f} = pair φ (pair (pair φ' counit) (pair φ' uni
         counit {t = pair a c} (pair b q) = ind-≡ (λ q → (φ ∘ φ') (pair b q) ≡ pair b q) refl q
 ```
 
-Now as a payoff for out hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences. Specifically a family of maps is a family of equivalences if and only if it's total map is an equivalence.
+Now as a payoff for our hard work on contractible maps and coherent inverses, we get the following characterisation of families of equivalences. Specifically a family of maps is a family of equivalences if and only if it's total map is an equivalence.
 
 ```agda
 tot-of-equiv-family-is-equiv : {i j k : Level} {A : UU i} {B : A → UU j} {C : A → UU k}
@@ -1567,6 +1605,29 @@ equiv-tot-implies-equiv-family {A = A} {B = B} {f = f} t = contr-map-to-equiv �
         contr-f x c = transport-of-contr-along-equiv tot-fibs (contr-tot-f (pair x c))
 ```
 
+### Expressing types as sums of 𝟙
+
+The following results which express any type as a sum of copies of contractible types can sometimes be handy.
+
+```agda
+types-as-sums-of-𝟙 : {i : Level} {A : UU i} →  A ≃ Σ x ∈ A , 𝟙
+types-as-sums-of-𝟙 {A = A} = pair (λ x → pair x ∗) (pair (pair pr₁ H) (pair pr₁ refl-htpy))
+    where
+        H : (λ s → pair (pr₁ s) ∗) ∼ id
+        H (pair _ ∗) = ≅-pair (pair refl refl)
+
+≃-trans : {i j k : Level} {A : UU i} {B : UU j} {C : UU k} → A ≃ B → B ≃ C → A ≃ C
+≃-trans (pair f p) (pair g q) = pair (g ∘ f) (compose-equiv (λ x → refl) q p)
+
+types-as-sums-of-contr : {i j : Level} {A : UU i} {B : A → UU j} → ((x : A) → is-contr (B x)) → A ≃ Σ x ∈ A , B x 
+types-as-sums-of-contr p = 
+    ≃-trans types-as-sums-of-𝟙 
+            (pair _ (tot-of-equiv-family-is-equiv {f = λ {x} _ → pr₁ (p x)} (λ x → map-of-contr-is-equiv unit-is-contr (p x))))
+
+types-as-sums-of-≡ : {i : Level} {A : UU i} → A ≃ Σ x ∈ A , (Σ y ∈ A , (x ≡ y))
+types-as-sums-of-≡ = types-as-sums-of-contr path-space-is-contr
+```
+
 ### Identity systems and the fundamental theorem
 
 Given a type family `B : A → UU j` we would like to know when it is familiarly equivalent to the identity type family `λ x → a ≡ x : A → UU i` for some fixed `a : A`. For example, this is important when we are trying to find observational variants of identity types, such as the John Major equality that observationally captures identities between elements of a sum type.
@@ -1574,18 +1635,20 @@ Given a type family `B : A → UU j` we would like to know when it is familiarly
 Notice, however, that the path space `path-space a ≔ Σ x ∈ A , a ≡ x` is also the total map associated with the family `λ x → a ≡ x` and we already know that it is contractible. So we can combine our characterisation of families of equivalences as being those families whose total map is an equivalence with the stability results we've just derived for contractible spaces to prove the following result characterising those type families that are equivalent to `λ x → a ≡ x`:
 
 ```agda
-fundamental-≡-one : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} →
+fundamental-≡-theorem : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} →
                     is-contr(Σ x ∈ A , B x) → (x : A) → is-equiv (f {x = x})
-fundamental-≡-one {a = a} {f = f} s =
+fundamental-≡-theorem {a = a} {f = f} s =
     equiv-tot-implies-equiv-family {f = f} (map-of-contr-is-equiv (path-space-is-contr a) s)
 
-fundamental-≡-two : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} →
+fundamental-≡-theorem' : {i j : Level} {A : UU i} {B : A → UU j} {a : A} {f : {x : A} → a ≡ x → B x} →
                     ((x : A) → is-equiv (f {x = x})) → is-contr(Σ x ∈ A , B x)
-fundamental-≡-two {a = a} {f = f} t =
+fundamental-≡-theorem' {a = a} {f = f} t =
     transport-of-contr-along-equiv (pair (tot f) (tot-of-equiv-family-is-equiv t)) (path-space-is-contr a)
 ```
 
-We might hope that a family of types that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't ask for this induction principle to be **definitional**, but we can at least ask for some kind of propositionally valid instance. These are expressed using _identity systems_ which are defined to be types dependent on `A` and `B` for which a certain projection
+We might hope that a family of types `B : A → UU j` that is equivalent to the family of identity types based at `a : A` would inherit some aspect of the path induction principle. We can't ask for this induction principle to be **definitional**, but we can at least ask for some kind of propositionally valid instance. 
+
+Following the pattern set by path induction we start by fixing `a : A` and `b : B a` and our aim is to think of `B x` as being equivalent to `a ≡ x` and of `b : B a` as being the element corresponding to `refl : a ≡ a` under that equivalence. As with path induction, our motive is a type dependent on `x : A` and `y : B x`, the latter of which we think of as a path from `a` to `x`, that is to say a type `P : (x : A) → B x → UU k)`. Then in this context path induction corresponds to asking that the projection `app a b : ((x : A) (y : B x) → P x y) → P a b`, which applies each function `m : (x : A) (y : B x) → P x y` to the elements `a` and `b` to give `m {x = a} b : P a b` has a _section_. If this condition holds for all such dependent families `P` then we say that `B` is an _identity system_ at `b : B a`.
 
 ### Embeddings
 
@@ -1593,7 +1656,97 @@ In Definition 11.4.1 of [Rijke](https://arxiv.org/abs/2212.11082) we are introdu
 
 ```agda
 is-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → UU (i ⊔ j)
-is-emb {A = A} f = {a a' : A} → is-equiv (ap f {a = a} {a' = a'})
+is-emb {A = A} f = (a a' : A) → is-equiv (ap f {a = a} {a' = a'})
 ```
 
 Now Theorem 11.4.2 tells us that if a map is an equivalence then it is an embedding, which we prove using the fundamental theorem.
+
+```agda
+equiv-is-emb : {i j : Level} {A : UU i} {B : UU j} (f : A → B) → is-equiv f → is-emb f
+equiv-is-emb {A = A} f p a = fundamental-≡-theorem contr-prf
+    where
+        equiv-to-fibre : (Σ a' ∈ A , (f a ≡ f a')) ≃ fib f (f a)
+        equiv-to-fibre = pair φ (pair (pair φ' (λ s → ap (pair (pr₁ s)) inv-involutive)) 
+                                   (pair φ' (λ s → ap (pair (pr₁ s)) inv-involutive)))
+            where
+                φ : Σ a' ∈ A , (f a ≡ f a') → fib f (f a)
+                φ (pair a' p) = pair a' (inv p)
+
+                φ' : fib f (f a) → Σ a' ∈ A , (f a ≡ f a')
+                φ' (pair a' p) = pair a' (inv p)
+
+        contr-prf : is-contr (Σ a' ∈ A , (f a ≡ f a'))
+        contr-prf = transport-of-contr-along-equiv' equiv-to-fibre (equiv-to-contr-map p (f a))
+```
+
+As in Section 11.4, this proof establishes that `ap f : a ≡ a' → f a ≡ f a'` is a family of equivalences by observing that the fundamental theorem of identity types applies so long as we can show that for `a : A` we have that `Σ a' ∈ A , f a ≡ f a'` is contractible. This latter result is established by using path inversion to give an equivalence `Σ a' ∈ A , f a ≡ f a' ≃ fib f (f a)` and then appealing to `equiv-to-contr-map` which shows that the fibres of an equivalence are contractible. Now we can use our 2-of-3 result `transport-of-contr-along-equiv'` which shows that a type equivalent to a contractible type is itself contractible.
+
+### Structure identity principle
+
+The _structure identity principle_ is a dependent variant of the fundamental theorem of identity types. The setup is that we are hoping to describe how to build families on a sum type that are equivalent, in an appropriate sense, to its identity type. Our intuition for how to do this comes from our observational characterisation of that identity type in terms of _John Major equality_, which tells is that the identity type `pair a b ≡ pair a' b'` is equivalent to the sum type `Σ p : (a ≡ a') , (tr p b ≡ b')`.  
+
+```agda
+module _ {i j k l : Level} 
+         {A : UU i} 
+         {B : A → UU j} 
+         (C : A → UU k) 
+         (D : {x : A} → B x → C x → UU l)  where
+
+    record SIAxioms : UU (i ⊔ j ⊔ lsuc k ⊔ lsuc l) where
+        constructor mk-si-axioms
+        field
+            tot-C-axiom : is-contr (Σ x ∈ A , C x)
+        a = pr₁ (pr₁ tot-C-axiom)
+        c = pr₂ (pr₁ tot-C-axiom)
+        field
+            tot-D-axiom : is-contr (Σ y ∈ B a , (D y c))  
+        b = pr₁ (pr₁ tot-D-axiom)
+        d = pr₂ (pr₁ tot-D-axiom)
+```
+
+
+
+```agda
+    structure-≡-principle : (a : A) (b : B a)
+        (f : {t@(pair x y) : Σ x ∈ A , B x} → (pair a b) ≡ t → (Σ c ∈ C x , D y c)) →
+        SIAxioms → (t : Σ x ∈ A , B x) → is-equiv (f {t = t})
+    structure-≡-principle a b f sia = 
+        fundamental-≡-theorem (transport-of-contr-along-equiv' tot-equiv tot-contr)
+        where
+            tot-contr : is-contr (Σ s@(pair x p) ∈ (Σ x ∈ A , C x) , Σ y ∈ B x , D y p)
+            tot-contr = tot-of-contr-fam-is-contr (SIAxioms.tot-C-axiom sia) (SIAxioms.tot-D-axiom sia)
+
+            φ : (Σ t@(pair x y) ∈ (Σ x ∈ A , B x) , (Σ p ∈ C x , D y p)) →
+                (Σ s@(pair x p) ∈ (Σ x ∈ A , C x) , (Σ y ∈ B x , D y p))
+            φ (pair (pair x y) (pair p q)) = pair (pair x p) (pair y q)
+
+            ψ : (Σ s@(pair x p) ∈ (Σ x ∈ A , C x) , (Σ y ∈ B x , D y p)) →
+                (Σ t@(pair x y) ∈ (Σ x ∈ A , B x) , (Σ p ∈ C x , D y p))
+            ψ  (pair (pair x p) (pair y q)) = pair (pair x y) (pair p q)
+
+            tot-equiv : (Σ t@(pair x y) ∈ (Σ x ∈ A , B x) , (Σ p ∈ C x , D y p)) ≃
+                        (Σ s@(pair x p) ∈ (Σ x ∈ A , C x) , (Σ y ∈ B x , D y p))
+            tot-equiv = pair φ (pair (pair ψ (λ _ → refl)) (pair ψ (λ _ → refl)))
+```
+
+As a first application we can provide the following observational characterisation of the equality type on a path space.
+
+```agda
+≡-path-space : {i : Level} {A : UU i} {a : A} (s t : path-space a) → UU i
+≡-path-space (pair x p) (pair x' p') = Σ q ∈ (x ≡ x') , (p · q ≡ p')
+
+≡-path-space-refl : {i : Level} {A : UU i} {a : A} {s : path-space a} → ≡-path-space s s
+≡-path-space-refl = pair refl right-unit
+
+≡-to-≡-path-space : {i : Level} {A : UU i} {a : A} (s t : path-space a) → s ≡ t → ≡-path-space s t
+≡-to-≡-path-space s t = ind-≡ (λ {t} _ → ≡-path-space s t) ≡-path-space-refl 
+
+≡-obs-equiv : {i : Level} {A : UU i} {a : A} (s t : path-space a) → (s ≡ t) ≃ (≡-path-space s t)
+≡-obs-equiv {a = a} s@(pair x p) t = pair (≡-to-≡-path-space s t) (lem t)
+    where
+        lem : (t : path-space a) → is-equiv (≡-to-≡-path-space s t)
+        lem = structure-≡-principle _ _ _ _ _
+                (mk-si-axioms 
+                    (path-space-is-contr x) 
+                    (path-space-is-contr (p · pr₂ (pr₁ (path-space-is-contr x)))))
+```
