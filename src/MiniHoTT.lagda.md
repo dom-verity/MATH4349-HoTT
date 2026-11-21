@@ -1750,3 +1750,55 @@ As a first application we can provide the following observational characterisati
                     (path-space-is-contr x) 
                     (path-space-is-contr (p · pr₂ (pr₁ (path-space-is-contr x)))))
 ```
+
+### Sets and propositions
+
+### Chapter 12
+
+Some basic definitions
+
+```agda
+is-prop : {i : Level} (A : UU i) → UU i 
+is-prop A = (x y : A) → is-contr (x ≡ y)
+
+is-set : {i : Level} (A : UU i) → UU i 
+is-set A = (x y : A) → is-prop (x ≡ y)
+
+is-connected : {i : Level} (A : UU i) → UU i
+is-connected A = (x y : A) → (x ≡ y)
+```
+
+We haven't given an observational equality on the unit type yet so lets quickly do that using the fundamental theorem of identity types.
+
+```agda
+≡-𝟙 : 𝟙 → 𝟙 → UU lzero
+≡-𝟙 s t = 𝟙
+
+≡-𝟙-refl : {s : 𝟙} → ≡-𝟙 s s
+≡-𝟙-refl = ∗
+
+≡-to-≡-𝟙 : (s t : 𝟙) → s ≡ t → ≡-𝟙 s t
+≡-to-≡-𝟙 _ _ refl = ≡-𝟙-refl {s = ∗}
+
+≡-to-≡-𝟙-equiv : (s t : 𝟙) → is-equiv (≡-to-≡-𝟙 s t)
+≡-to-≡-𝟙-equiv ∗ = fundamental-≡-theorem (pair (pair ∗ ∗) λ {(pair ∗ ∗) → refl})
+```
+
+Now we can prove the implications of Proposition 12.1.3 which gives equivalent characterisations of propositional types.
+
+```agda
+module _ {i : Level} {A : UU i} where
+    connected-implies-contr-once-inhab : is-connected A → A → is-contr A 
+    connected-implies-contr-once-inhab  p a = pair a (p a)
+
+    contr-once-inhab-implies-emb-to-𝟙 : (A → is-contr A) → is-emb (const {B = A} ∗)
+    contr-once-inhab-implies-emb-to-𝟙 p = lem (λ a → equiv-is-emb (const ∗) (map-of-contr-is-equiv (p a) unit-is-contr))
+        where
+            lem : {j k : Level} {B : UU j} {C : UU k} {f : B → C} → (B → is-emb f) → is-emb f 
+            lem k b = k b b
+
+    emb-to-𝟙-implies-prop : is-emb (const {B = A} ∗) → is-prop A
+    emb-to-𝟙-implies-prop p a a' = 
+        transport-of-contr-along-equiv' (pair (ap (const ∗)) (p a a')) 
+            (transport-of-contr-along-equiv' (pair (≡-to-≡-𝟙 ∗ ∗) (≡-to-≡-𝟙-equiv ∗ ∗)) unit-is-contr)
+```
