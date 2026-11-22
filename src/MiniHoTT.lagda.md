@@ -1788,6 +1788,9 @@ Now we can prove the implications of Proposition 12.1.3 which gives equivalent c
 
 ```agda
 module _ {i : Level} {A : UU i} where
+    prop-implies-connected : is-prop A → is-connected A
+    prop-implies-connected p x y = pr₁ (p x y)
+
     connected-implies-contr-once-inhab : is-connected A → A → is-contr A 
     connected-implies-contr-once-inhab  p a = pair a (p a)
 
@@ -1801,4 +1804,8 @@ module _ {i : Level} {A : UU i} where
     emb-to-𝟙-implies-prop p a a' = 
         transport-of-contr-along-equiv' (pair (ap (const ∗)) (p a a')) 
             (transport-of-contr-along-equiv' (pair (≡-to-≡-𝟙 ∗ ∗) (≡-to-≡-𝟙-equiv ∗ ∗)) unit-is-contr)
+
+    connected-implies-prop : is-connected A → is-prop A
+    connected-implies-prop = 
+        emb-to-𝟙-implies-prop ∘ contr-once-inhab-implies-emb-to-𝟙 ∘ connected-implies-contr-once-inhab
 ```
